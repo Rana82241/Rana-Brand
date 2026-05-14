@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>CyberPredict AI — Neon Dashboard</title>
+<style>
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#00f0ff;--pink:#ff2d95;--green:#39ff14;--red:#ff3131;
+  --gold:#ffd700;--bg:#0a0a12;--card:rgba(15,15,30,0.65);
+  --glass:rgba(255,255,255,0.04);--border:rgba(0,240,255,0.15);
+  --text:#e0e8ff;--muted:#7a8ba8;--font:'Segoe UI',system-ui,sans-serif;
+}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:4px}
+
+/* ========== CYBER GRID BACKGROUND ========== */
+#cyberGrid{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+#cyberGrid canvas{width:100%;height:100%}
+
+/* ========== LOADING SCREEN ========== */
+#loadingScreen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--bg);transition:opacity .6s}
+#loadingScreen.hide{opacity:0;pointer-events:none}
+.loader-logo{font-size:2.4rem;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:logoPulse 1.5s ease-in-out infinite}
+@keyframes logoPulse{0%,100%{filter:brightness(1);transform:scale(1)}
+  50%{filter:brightness(1.5);transform:scale(1.05)}}
+.loader-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;
+  margin-top:24px;overflow:hidden}
+.loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pink));
+  border-radius:3px;animation:loadBar 2.5s ease forwards}
+@keyframes loadBar{to{width:100%}}
+.loader-text{margin-top:12px;color:var(--muted);font-size:.85rem;letter-spacing:2px;
+  animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ========== LOGIN SCREEN ========== */
+#loginScreen{position:fixed;inset:0;z-index:8888;display:flex;align-items:center;
+  justify-content:center;background:var(--bg);transition:opacity .5s}
+#loginScreen.hide{opacity:0;pointer-events:none}
+.login-card{background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--border);
+  border-radius:16px;padding:40px 32px;width:90%;max-width:380px;text-align:center;
+  box-shadow:0 0 40px rgba(0,240,255,0.08)}
+.login-card h2{font-size:1.6rem;margin-bottom:6px;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-card p{color:var(--muted);font-size:.8rem;margin-bottom:24px}
+.login-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-size:1rem;outline:none;transition:border .3s}
+.login-input:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,240,255,0.2)}
+.login-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:10px;
+  font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--cyan),var(--pink));color:#000;
+  transition:transform .2s,box-shadow .3s;text-transform:uppercase}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(0,240,255,0.4)}
+.login-btn:active{transform:scale(.97)}
+.login-error{color:var(--red);font-size:.8rem;margin-top:10px;min-height:1.2em}
+
+/* ========== MAIN DASHBOARD ========== */
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;
+  padding:12px;max-width:520px;margin:0 auto}
+#dashboard.show{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ========== HEADER ========== */
+.header{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;margin-bottom:12px}
+.header-brand{font-weight:800;font-size:1.15rem;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;align-items:center;gap:12px}
+.ping-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pingPulse 2s infinite}
+@keyframes pingPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ping-text{font-size:.7rem;color:var(--muted)}
+.sound-btn{background:none;border:1px solid var(--border);border-radius:8px;
+  padding:4px 8px;color:var(--cyan);cursor:pointer;font-size:.85rem;transition:all .3s}
+.sound-btn:hover{background:rgba(0,240,255,0.1)}
+.logout-btn{background:none;border:1px solid rgba(255,45,149,0.3);border-radius:8px;
+  padding:4px 10px;color:var(--pink);cursor:pointer;font-size:.75rem;transition:all .3s}
+.logout-btn:hover{background:rgba(255,45,149,0.1)}
+
+/* ========== GLASS CARD ========== */
+.g-card{background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;
+  transition:border-color .3s}
+.g-card:hover{border-color:rgba(0,240,255,0.3)}
+.card-title{font-size:.75rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';width:3px;height:12px;background:var(--cyan);border-radius:2px}
+
+/* ========== TIMER SECTION ========== */
+.timer-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.period-info{flex:1;min-width:0}
+.period-label{font-size:.7rem;color:var(--muted)}
+.period-num{font-size:1.1rem;font-weight:800;color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,240,255,0.4);word-break:break-all}
+.timer-display{display:flex;align-items:center;gap:4px}
+.timer-digit{background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(255,45,149,0.08));
+  border:1px solid var(--border);border-radius:8px;padding:8px 10px;
+  font-size:1.4rem;font-weight:900;color:var(--cyan);min-width:36px;text-align:center;
+  text-shadow:0 0 12px rgba(0,240,255,0.5)}
+.timer-sep{font-size:1.4rem;color:var(--pink);animation:blink 1s step-end infinite}
+.timer-bar{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;
+  margin-top:10px;overflow:hidden}
+.timer-bar-fill{height:100%;border-radius:3px;transition:width 1s linear;
+  background:linear-gradient(90deg,var(--cyan),var(--pink))}
+
+/* ========== PREDICTION PANEL ========== */
+.pred-result{text-align:center;padding:20px 0 10px}
+.pred-label{font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.pred-value{font-size:2.8rem;font-weight:900;margin:6px 0;letter-spacing:4px;
+  text-shadow:0 0 30px currentColor;transition:color .3s}
+.pred-value.big{color:var(--pink)}
+.pred-value.small{color:var(--cyan)}
+.pred-confidence{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.conf-bar{width:120px;height:6px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden}
+.conf-fill{height:100%;border-radius:6px;transition:width .6s ease;
+  background:linear-gradient(90deg,var(--cyan),var(--pink))}
+.conf-text{font-size:.85rem;font-weight:700;color:var(--gold)}
+
+/* ========== CIRCULAR NUMBER INDICATORS ========== */
+.num-indicators{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0}
+.num-circle{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:.95rem;border:2px solid var(--border);
+  transition:all .4s;cursor:default;position:relative}
+.num-circle.big-num{border-color:var(--pink);color:var(--pink);
+  box-shadow:0 0 10px rgba(255,45,149,0.25)}
+.num-circle.small-num{border-color:var(--cyan);color:var(--cyan);
+  box-shadow:0 0 10px rgba(0,240,255,0.25)}
+.num-circle.active{transform:scale(1.2);
+  background:linear-gradient(135deg,rgba(0,240,255,0.2),rgba(255,45,149,0.2))}
+
+/* ========== TREND SECTION ========== */
+.trend-dots{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.trend-dot{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-size:.6rem;font-weight:700;transition:all .3s}
+.trend-dot.b{background:rgba(255,45,149,0.2);color:var(--pink);border:1px solid rgba(255,45,149,0.3)}
+.trend-dot.s{background:rgba(0,240,255,0.15);color:var(--cyan);border:1px solid rgba(0,240,255,0.3)}
+.trend-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.trend-stat{text-align:center;padding:8px;background:var(--glass);border-radius:10px;
+  border:1px solid var(--border)}
+.trend-stat-val{font-size:1.1rem;font-weight:800}
+.trend-stat-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ========== MODE BUTTONS ========== */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mode-btn{padding:10px;border-radius:10px;border:1px solid var(--border);
+  background:var(--glass);color:var(--text);font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:all .3s;text-align:center;letter-spacing:.5px}
+.mode-btn:hover{border-color:var(--cyan);background:rgba(0,240,255,0.08)}
+.mode-btn.active{border-color:var(--cyan);background:rgba(0,240,255,0.12);
+  color:var(--cyan);box-shadow:0 0 15px rgba(0,240,255,0.15)}
+
+/* ========== MARTINGALE ========== */
+.mart-row{display:flex;align-items:center;gap:10px}
+.mart-level{font-size:2rem;font-weight:900;color:var(--gold);
+  text-shadow:0 0 15px rgba(255,215,0,0.4)}
+.mart-info{flex:1}
+.mart-info-text{font-size:.75rem;color:var(--muted)}
+.mart-streak{font-weight:700}
+.mart-reset-btn{padding:8px 16px;border-radius:8px;border:1px solid rgba(255,215,0,0.3);
+  background:rgba(255,215,0,0.08);color:var(--gold);font-size:.75rem;
+  cursor:pointer;transition:all .3s;font-weight:600}
+.mart-reset-btn:hover{background:rgba(255,215,0,0.15);border-color:var(--gold)}
+
+/* ========== HISTORY TABLE ========== */
+.hist-table{width:100%;border-collapse:collapse}
+.hist-table th{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);padding:8px 6px;text-align:left;border-bottom:1px solid var(--border)}
+.hist-table td{padding:8px 6px;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,0.03)}
+.hist-table tr{transition:background .2s}
+.hist-table tr:hover td{background:rgba(0,240,255,0.03)}
+.badge{display:inline-block;padding:2px 10px;border-radius:6px;font-size:.7rem;font-weight:700}
+.badge.big{background:rgba(255,45,149,0.15);color:var(--pink)}
+.badge.small{background:rgba(0,240,255,0.12);color:var(--cyan)}
+.badge.win{background:rgba(57,255,20,0.15);color:var(--green)}
+.badge.loss{background:rgba(255,49,49,0.15);color:var(--red)}
+
+/* ========== ACTION BUTTONS ========== */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.glow-btn{padding:12px;border:none;border-radius:10px;font-size:.85rem;font-weight:700;
+  cursor:pointer;letter-spacing:1px;transition:all .3s;text-transform:uppercase}
+.glow-btn:active{transform:scale(.95)}
+.glow-btn.primary{background:linear-gradient(135deg,var(--cyan),#0088aa);color:#000;
+  box-shadow:0 0 20px rgba(0,240,255,0.2)}
+.glow-btn.primary:hover{box-shadow:0 0 30px rgba(0,240,255,0.4);transform:translateY(-1px)}
+.glow-btn.danger{background:linear-gradient(135deg,var(--pink),#aa0044);color:#fff;
+  box-shadow:0 0 20px rgba(255,45,149,0.2)}
+.glow-btn.danger:hover{box-shadow:0 0 30px rgba(255,45,149,0.4);transform:translateY(-1px)}
+.glow-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;
+  box-shadow:none!important}
+
+/* ========== STATUS BAR ========== */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px;text-align:center;font-size:.7rem;color:var(--muted)}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.status-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.offline{background:var(--red);box-shadow:0 0 6px var(--red)}
+
+/* ========== TOAST ========== */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  padding:12px 24px;border-radius:10px;font-size:.85rem;font-weight:600;z-index:9000;
+  backdrop-filter:blur(16px);border:1px solid var(--border);background:var(--card);
+  transition:transform .4s ease,opacity .4s;opacity:0;pointer-events:none;
+  white-space:nowrap;max-width:90%}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ========== ERROR OVERLAY ========== */
+.error-banner{background:rgba(255,49,49,0.1);border:1px solid rgba(255,49,49,0.3);
+  border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:var(--red);
+  display:none;align-items:center;gap:8px}
+.error-banner.show{display:flex}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:400px){
+  .pred-value{font-size:2.2rem}
+  .timer-digit{font-size:1.1rem;padding:6px 8px;min-width:30px}
+  .num-circle{width:32px;height:32px;font-size:.8rem}
+  .trend-dot{width:18px;height:18px;font-size:.55rem}
+  .g-card{padding:12px}
+}
+@media(min-width:521px){
+  #dashboard{padding:20px}
+  .g-card{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== CYBER GRID BACKGROUND ========== -->
+<div id="cyberGrid"><canvas id="gridCanvas"></canvas></div>
+
+<!-- ========== LOADING SCREEN ========== -->
+<div id="loadingScreen">
+  <div class="loader-logo">CYBERPREDICT</div>
+  <div class="loader-bar"><div class="loader-bar-inner"></div></div>
+  <div class="loader-text">INITIALIZING AI ENGINE...</div>
+</div>
+
+<!-- ========== LOGIN SCREEN ========== -->
+<div id="loginScreen" style="display:none">
+  <div class="login-card">
+    <h2>⟨ ACCESS PANEL ⟩</h2>
+    <p>Enter credentials to access the prediction engine</p>
+    <input class="login-input" id="loginPass" type="password" placeholder="Enter access code..." autocomplete="off"/>
+    <button class="login-btn" id="loginBtn" onclick="handleLogin()">AUTHENTICATE</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div id="toast"></div>
+
+<!-- ========== MAIN DASHBOARD ========== -->
+<div id="dashboard">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-brand">CYBERPREDICT AI</div>
+    <div class="header-right">
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="ping-dot" id="pingDot"></div>
+        <span class="ping-text" id="pingText">--ms</span>
+      </div>
+      <button class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+      <button class="logout-btn" onclick="handleLogout()">EXIT</button>
+    </div>
+  </div>
+
+  <!-- ERROR BANNER -->
+  <div class="error-banner" id="errorBanner">
+    <span>⚠</span><span id="errorText">API connection error</span>
+  </div>
+
+  <!-- TIMER -->
+  <div class="g-card">
+    <div class="card-title">Current Period</div>
+    <div class="timer-row">
+      <div class="period-info">
+        <div class="period-label">PERIOD ID</div>
+        <div class="period-num" id="periodNum">----</div>
+      </div>
+      <div class="timer-display">
+        <div class="timer-digit" id="timerMin">0</div>
+        <div class="timer-sep">:</div>
+        <div class="timer-digit" id="timerSec1">0</div>
+        <div class="timer-digit" id="timerSec2">0</div>
+      </div>
+    </div>
+    <div class="timer-bar"><div class="timer-bar-fill" id="timerBarFill"></div></div>
+  </div>
+
+  <!-- PREDICTION PANEL -->
+  <div class="g-card">
+    <div class="card-title">AI Prediction</div>
+    <div class="pred-result">
+      <div class="pred-label">NEXT PERIOD RESULT</div>
+      <div class="pred-value" id="predValue">---</div>
+      <div class="pred-confidence">
+        <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+        <span class="conf-text" id="confText">--%</span>
+      </div>
+    </div>
+
+    <!-- NUMBER INDICATORS -->
+    <div class="num-indicators" id="numIndicators"></div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="action-row">
+      <button class="glow-btn primary" id="btnBig" onclick="manualPick('BIG')">BIG (5-9)</button>
+      <button class="glow-btn danger" id="btnSmall" onclick="manualPick('SMALL')">SMALL (0-4)</button>
+    </div>
+  </div>
+
+  <!-- TREND ANALYSIS -->
+  <div class="g-card">
+    <div class="card-title">Trend Analysis</div>
+    <div class="trend-dots" id="trendDots"></div>
+    <div class="trend-stats">
+      <div class="trend-stat">
+        <div class="trend-stat-val" id="statBig" style="color:var(--pink)">0</div>
+        <div class="trend-stat-label">Big</div>
+      </div>
+      <div class="trend-stat">
+        <div class="trend-stat-val" id="statSmall" style="color:var(--cyan)">0</div>
+        <div class="trend-stat-label">Small</div>
+      </div>
+      <div class="trend-stat">
+        <div class="trend-stat-val" id="statStreak" style="color:var(--gold)">0</div>
+        <div class="trend-stat-label">Streak</div>
+      </div>
+    </div>
+    <!-- MODES -->
+    <div class="mode-row">
+      <button class="mode-btn active" id="modeFollow" onclick="setMode('follow')">📈 Trend Follow</button>
+      <button class="mode-btn" id="modeReverse" onclick="setMode('reverse')">🔄 Smart Reverse</button>
+    </div>
+  </div>
+
+  <!-- MARTINGALE -->
+  <div class="g-card">
+    <div class="card-title">Martingale Tracker</div>
+    <div class="mart-row">
+      <div class="mart-level" id="martLevel">M0</div>
+      <div class="mart-info">
+        <div class="mart-info-text">Current Loss Streak: <span class="mart-streak" id="martStreak">0</span></div>
+        <div class="mart-info-text">Suggested Multiplier: <span class="mart-streak" id="martMulti">1x</span></div>
+      </div>
+      <button class="mart-reset-btn" onclick="resetMartingale()">RESET</button>
+    </div>
+  </div>
+
+  <!-- HISTORY TABLE -->
+  <div class="g-card">
+    <div class="card-title">Live History</div>
+    <div style="overflow-x:auto">
+      <table class="hist-table">
+        <thead><tr>
+          <th>Period</th><th>Number</th><th>Result</th><th>Prediction</th><th>Status</th>
+        </tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting to prediction engine...</span>
+  </div>
+</div>
+
+<script>
+/* =================================================================
+   CYBERPREDICT AI — COMPLETE PREDICTION DASHBOARD ENGINE
+   ================================================================= */
+
+// ---- CONFIG ----
+const CONFIG = {
+  API_BASE: 'https://sit-webapi.mggametransit.com',
+  TENANT_ID: 6004,
+  PASSWORD: 'rana1234',
+  TIMER_DURATION: 60,
+  HISTORY_LIMIT: 20,
+  TREND_WINDOW: 30,
+  FETCH_INTERVAL: 5000,
+  PING_INTERVAL: 10000
+};
+
+// ---- STATE ----
+const STATE = {
+  loggedIn: false,
+  soundOn: true,
+  mode: 'follow',         // 'follow' | 'reverse'
+  timer: CONFIG.TIMER_DURATION,
+  currentPeriod: '',
+  lastResult: null,
+  prediction: null,
+  confidence: 0,
+  history: [],
+  trendData: [],
+  martingale: { level: 0, streak: 0 },
+  isOnline: true,
+  fetchErrors: 0,
+  timerInterval: null,
+  fetchInterval: null,
+  pingInterval: null,
+  predictionHistory: [],
+  apiAvailable: false
+};
+
+// ---- AUDIO (Web Audio API - no external files) ----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playTone(freq, duration, type = 'sine', vol = 0.15) {
+  if (!STATE.soundOn) return;
+  try {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function sfxTick() { playTone(800, 0.05, 'square', 0.05); }
+function sfxPredict() { playTone(1200, 0.15, 'sine'); playTone(1600, 0.15, 'sine'); }
+function sfxWin() { playTone(880, 0.1); setTimeout(() => playTone(1100, 0.1), 100); setTimeout(() => playTone(1400, 0.2), 200); }
+function sfxLoss() { playTone(300, 0.3, 'sawtooth', 0.1); }
+function sfxAlert() { playTone(600, 0.1, 'triangle'); setTimeout(() => playTone(600, 0.1, 'triangle'), 150); }
+
+// ---- CYBER GRID ----
+function initGrid() {
+  const canvas = document.getElementById('gridCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const cols = 30;
+  const rows = 20;
+  let offset = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const cw = w / cols;
+    const rh = h / rows;
+    offset += 0.3;
+
+    // Horizontal lines
+    for (let i = 0; i <= rows; i++) {
+      const y = i * rh + (offset % rh);
+      const alpha = 0.03 + 0.02 * Math.sin(i * 0.5 + offset * 0.02);
+      ctx.strokeStyle = `rgba(0,240,255,${alpha})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    // Vertical lines
+    for (let i = 0; i <= cols; i++) {
+      const x = i * cw;
+      const alpha = 0.03 + 0.015 * Math.sin(i * 0.3 + offset * 0.015);
+      ctx.strokeStyle = `rgba(0,240,255,${alpha})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+
+    // Glow points at intersections
+    for (let i = 0; i <= cols; i += 5) {
+      for (let j = 0; j <= rows; j += 5) {
+        const x = i * cw;
+        const y = j * rh + (offset % rh);
+        const pulse = 0.15 + 0.1 * Math.sin(offset * 0.03 + i + j);
+        ctx.fillStyle = `rgba(0,240,255,${pulse})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ---- TOAST ----
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ---- LOADING / LOGIN ----
+function initApp() {
+  initGrid();
+  setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hide');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginPass').focus();
+  }, 2800);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') handleLogin();
+});
+
+function handleLogin() {
+  const pass = document.getElementById('loginPass').value.trim();
+  if (!pass) {
+    document.getElementById('loginError').textContent = 'Please enter access code';
+    return;
+  }
+  if (pass !== CONFIG.PASSWORD) {
+    document.getElementById('loginError').textContent = 'ACCESS DENIED — Invalid code';
+    sfxAlert();
+    return;
+  }
+  STATE.loggedIn = true;
+  document.getElementById('loginScreen').classList.add('hide');
+  document.getElementById('dashboard').classList.add('show');
+  sfxPredict();
+  showToast('ACCESS GRANTED — Engine Online');
+  startEngine();
+}
+
+function handleLogout() {
+  STATE.loggedIn = false;
+  clearInterval(STATE.timerInterval);
+  clearInterval(STATE.fetchInterval);
+  clearInterval(STATE.pingInterval);
+  document.getElementById('dashboard').classList.remove('show');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').classList.remove('hide');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+  showToast('Session terminated');
+}
+
+// ---- SOUND TOGGLE ----
+function toggleSound() {
+  STATE.soundOn = !STATE.soundOn;
+  document.getElementById('soundBtn').textContent = STATE.soundOn ? '🔊' : '🔇';
+  showToast(STATE.soundOn ? 'Sound ON' : 'Sound OFF');
+}
+
+// ---- NUMBER INDICATORS ----
+function initNumberIndicators() {
+  const container = document.getElementById('numIndicators');
+  container.innerHTML = '';
+  for (let i = 0; i <= 9; i++) {
+    const div = document.createElement('div');
+    div.className = `num-circle ${i >= 5 ? 'big-num' : 'small-num'}`;
+    div.id = `numC${i}`;
+    div.textContent = i;
+    container.appendChild(div);
+  }
+}
+
+function highlightNumber(num) {
+  for (let i = 0; i <= 9; i++) {
+    const el = document.getElementById(`numC${i}`);
+    el.classList.toggle('active', i === num);
+  }
+}
+
+// ---- API FETCHING ----
+async function fetchGameData() {
+  const url = `${CONFIG.API_BASE}/api/webapi/GetNoapolygon/GetGameIssue`;
+  const body = {
+    typeid: 1,
+    language: 0,
+    pageno: 0,
+    pageSize: CONFIG.TREND_WINDOW
+  };
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    STATE.fetchErrors = 0;
+    setOnline(true);
+    hideError();
+    STATE.apiAvailable = true;
+    return data;
+  } catch (err) {
+    // Try alternate endpoint
+    try {
+      const resp2 = await fetch(`${CONFIG.API_BASE}/api/webapi/GetGameIssue`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ typeid: 1, language: 0, pageno: 0, pageSize: CONFIG.TREND_WINDOW })
+      });
+      if (!resp2.ok) throw new Error(`HTTP ${resp2.status}`);
+      const data2 = await resp2.json();
+      STATE.fetchErrors = 0;
+      setOnline(true);
+      hideError();
+      STATE.apiAvailable = true;
+      return data2;
+    } catch (err2) {
+      STATE.fetchErrors++;
+      if (STATE.fetchErrors >= 3) {
+        showError('API unreachable — using simulation mode');
+        setOnline(false);
+      }
+      return null;
+    }
+  }
+}
+
+async function fetchAndProcess() {
+  const data = await fetchGameData();
+
+  if (data && data.data) {
+    processApiData(data.data);
+  } else {
+    // Simulation fallback
+    simulateData();
+  }
+}
+
+function processApiData(apiData) {
+  try {
+    const list = apiData.list || apiData.gameList || apiData || [];
+    if (!Array.isArray(list) || list.length === 0) {
+      simulateData();
+      return;
+    }
+
+    // Extract results
+    const results = list.map(item => {
+      const num = parseInt(item.number || item.result || item.num || '0');
+      const period = item.issueNumber || item.period || item.issue || '';
+      return { period, number: isNaN(num) ? 0 : num % 10 };
+    });
+
+    // Update current period from timer info
+    if (apiData.issue || apiData.issueNumber) {
+      STATE.currentPeriod = apiData.issue || apiData.issueNumber;
+    } else if (results.length > 0) {
+      STATE.currentPeriod = incrementPeriod(results[0].period);
+    }
+
+    // Timer from API
+    if (apiData.second !== undefined) {
+      STATE.timer = Math.max(0, parseInt(apiData.second));
+    }
+
+    // Update trend data
+    STATE.trendData = results.map(r => r.number).slice(0, CONFIG.TREND_WINDOW);
+
+    // Check last result
+    if (results.length > 0 && results[0].number !== STATE.lastResult) {
+      const prev = STATE.lastResult;
+      STATE.lastResult = results[0].number;
+
+      if (prev !== null && STATE.prediction) {
+        evaluatePrediction(results[0].number, results[0].period);
+      }
+    }
+
+    // Generate new prediction
+    generatePrediction();
+    updateUI();
+  } catch (e) {
+    console.warn('Process error:', e);
+    simulateData();
+  }
+}
+
+function incrementPeriod(period) {
+  const str = String(period);
+  const numPart = parseInt(str.slice(-4)) + 1;
+  return str.slice(0, -4) + String(numPart).padStart(4, '0');
+}
+
+// ---- SIMULATION FALLBACK ----
+function simulateData() {
+  // Generate realistic game data
+  if (STATE.trendData.length === 0) {
+    for (let i = 0; i < CONFIG.TREND_WINDOW; i++) {
+      STATE.trendData.push(Math.floor(Math.random() * 10));
+    }
+  }
+
+  // Generate period number based on date
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const minuteOfDay = now.getHours() * 60 + now.getMinutes();
+  const periodInDay = Math.floor(minuteOfDay) + 1;
+  STATE.currentPeriod = `${dateStr}${String(periodInDay).padStart(4, '0')}`;
+
+  // When timer hits 0, simulate new result
+  if (STATE.timer <= 0) {
+    const newNum = Math.floor(Math.random() * 10);
+    STATE.trendData.unshift(newNum);
+    STATE.trendData = STATE.trendData.slice(0, CONFIG.TREND_WINDOW);
+
+    if (STATE.prediction) {
+      evaluatePrediction(newNum, STATE.currentPeriod);
+    }
+
+    STATE.lastResult = newNum;
+    STATE.timer = CONFIG.TIMER_DURATION;
+
+    // New period
+    const newPeriodNum = periodInDay + 1;
+    STATE.currentPeriod = `${dateStr}${String(newPeriodNum).padStart(4, '0')}`;
+  }
+
+  generatePrediction();
+  updateUI();
+}
+
+// ---- PREDICTION ENGINE ----
+function generatePrediction() {
+  const data = STATE.trendData;
+  if (data.length < 3) {
+    STATE.prediction = 'BIG';
+    STATE.confidence = 50;
+    return;
+  }
+
+  // Analysis factors
+  let bigCount = 0, smallCount = 0;
+  let recentBig = 0, recentSmall = 0;
+  const recent = data.slice(0, 10);
+  const older = data.slice(10, 20);
+
+  data.forEach(n => n >= 5 ? bigCount++ : smallCount++);
+  recent.forEach(n => n >= 5 ? recentBig++ : recentSmall++);
+
+  // Streak analysis
+  let streak = 0;
+  const firstType = data[0] >= 5 ? 'BIG' : 'SMALL';
+  for (const n of data) {
+    if ((n >= 5 ? 'BIG' : 'SMALL') === firstType) streak++;
+    else break;
+  }
+
+  // Pattern analysis - look for alternation patterns
+  let altScore = 0;
+  for (let i = 0; i < Math.min(data.length - 1, 8); i++) {
+    const a = data[i] >= 5 ? 'BIG' : 'SMALL';
+    const b = data[i+1] >= 5 ? 'BIG' : 'SMALL';
+    if (a !== b) altScore++;
+  }
+
+  // Moving average trend
+  const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const olderAvg = older.length > 0 ? older.reduce((a, b) => a + b, 0) / older.length : 4.5;
+  const trendUp = recentAvg > olderAvg;
+
+  // Weighted scoring
+  let bigScore = 0;
+
+  // Frequency bias (slight counter)
+  bigScore += (smallCount - bigCount) * 2;
+
+  // Recent trend
+  bigScore += (recentBig - recentSmall) * 3;
+
+  // Streak factor (expect reversal after long streaks)
+  if (streak >= 4) {
+    bigScore += firstType === 'BIG' ? -15 : 15;
+  } else if (streak >= 3) {
+    bigScore += firstType === 'BIG' ? -8 : 8;
+  }
+
+  // Alternation pattern
+  if (altScore >= 6) {
+    // High alternation — predict opposite of last
+    bigScore += data[0] >= 5 ? -10 : 10;
+  }
+
+  // Trend direction
+  bigScore += trendUp ? 5 : -5;
+
+  // Apply mode
+  let rawPrediction = bigScore >= 0 ? 'BIG' : 'SMALL';
+
+  if (STATE.mode === 'reverse') {
+    rawPrediction = rawPrediction === 'BIG' ? 'SMALL' : 'BIG';
+  }
+
+  // Confidence calculation
+  const absScore = Math.abs(bigScore);
+  let confidence = Math.min(95, 55 + absScore * 1.5);
+
+  // Reduce confidence if data is noisy
+  if (altScore >= 5 && altScore <= 6) confidence -= 8;
+  if (streak === 1) confidence -= 5;
+  confidence = Math.max(52, Math.min(97, Math.round(confidence)));
+
+  STATE.prediction = rawPrediction;
+  STATE.confidence = confidence;
+  STATE.predictedNumber = estimateNumber(rawPrediction, data);
+}
+
+function estimateNumber(prediction, data) {
+  // Estimate a likely number based on recent frequency
+  const freq = new Array(10).fill(0);
+  data.slice(0, 10).forEach(n => freq[n]++);
+
+  const range = prediction === 'BIG' ? [5,6,7,8,9] : [0,1,2,3,4];
+  // Pick least frequent in range (due for appearance)
+  let minFreq = Infinity, pick = range[0];
+  for (const n of range) {
+    if (freq[n] < minFreq) { minFreq = freq[n]; pick = n; }
+  }
+  return pick;
+}
+
+// ---- EVALUATE PREDICTION ----
+function evaluatePrediction(resultNum, period) {
+  const resultType = resultNum >= 5 ? 'BIG' : 'SMALL';
+  const win = STATE.prediction === resultType;
+
+  const entry = {
+    period: period || STATE.currentPeriod,
+    number: resultNum,
+    result: resultType,
+    prediction: STATE.prediction,
+    win
+  };
+
+  STATE.predictionHistory.unshift(entry);
+  STATE.predictionHistory = STATE.predictionHistory.slice(0, CONFIG.HISTORY_LIMIT);
+
+  // Martingale
+  if (win) {
+    STATE.martingale = { level: 0, streak: 0 };
+    sfxWin();
+    showToast('✓ WIN — Prediction correct!');
+  } else {
+    STATE.martingale.streak++;
+    STATE.martingale.level = Math.min(STATE.martingale.streak, 7);
+    sfxLoss();
+    showToast('✗ LOSS — Adjusting analysis...');
+  }
+}
+
+// ---- MODE TOGGLE ----
+function setMode(mode) {
+  STATE.mode = mode;
+  document.getElementById('modeFollow').classList.toggle('active', mode === 'follow');
+  document.getElementById('modeReverse').classList.toggle('active', mode === 'reverse');
+  generatePrediction();
+  updateUI();
+  sfxTick();
+  showToast(mode === 'follow' ? 'Trend Follow Mode' : 'Smart Reverse Mode');
+}
+
+// ---- MANUAL PICK ----
+function manualPick(type) {
+  STATE.prediction = type;
+  STATE.confidence = 100;
+  updateUI();
+  sfxPredict();
+  showToast(`Manual override: ${type}`);
+}
+
+// ---- MARTINGALE RESET ----
+function resetMartingale() {
+  STATE.martingale = { level: 0, streak: 0 };
+  updateMartingaleUI();
+  sfxTick();
+  showToast('Martingale reset');
+}
+
+// ---- PING ----
+async function checkPing() {
+  const start = performance.now();
+  try {
+    await fetch(`${CONFIG.API_BASE}/api/webapi/health`, {
+      method: 'HEAD',
+      mode: 'no-cors',
+      cache: 'no-store'
+    });
+    const ms = Math.round(performance.now() - start);
+    document.getElementById('pingText').textContent = `${ms}ms`;
+    setOnline(true);
+  } catch {
+    document.getElementById('pingText').textContent = 'SIM';
+    // Keep running in simulation
+  }
+}
+
+function setOnline(online) {
+  STATE.isOnline = online;
+  const dot = document.getElementById('pingDot');
+  const sDot = document.getElementById('statusDot');
+  dot.style.background = online ? 'var(--green)' : 'var(--gold)';
+  dot.style.boxShadow = `0 0 8px ${online ? 'var(--green)' : 'var(--gold)'}`;
+  sDot.className = `status-dot ${online ? 'online' : 'offline'}`;
+  document.getElementById('statusText').textContent = online
+    ? 'Connected to prediction engine'
+    : 'Simulation mode — AI engine active';
+}
+
+function showError(msg) {
+  document.getElementById('errorText').textContent = msg;
+  document.getElementById('errorBanner').classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorBanner').classList.remove('show');
+}
+
+// ---- UPDATE UI ----
+function updateUI() {
+  updateTimerUI();
+  updatePredictionUI();
+  updateTrendUI();
+  updateMartingaleUI();
+  updateHistoryUI();
+  updatePeriodUI();
+}
+
+function updatePeriodUI() {
+  document.getElementById('periodNum').textContent = STATE.currentPeriod || '----';
+}
+
+function updateTimerUI() {
+  const t = Math.max(0, STATE.timer);
+  const min = Math.floor(t / 60);
+  const sec = t % 60;
+  document.getElementById('timerMin').textContent = min;
+  document.getElementById('timerSec1').textContent = Math.floor(sec / 10);
+  document.getElementById('timerSec2').textContent = sec % 10;
+  const pct = (t / CONFIG.TIMER_DURATION) * 100;
+  document.getElementById('timerBarFill').style.width = `${pct}%`;
+
+  // Color change when low
+  const digits = document.querySelectorAll('.timer-digit');
+  digits.forEach(d => {
+    d.style.color = t <= 10 ? 'var(--red)' : 'var(--cyan)';
+    d.style.textShadow = t <= 10 ? '0 0 12px var(--red)' : '0 0 12px rgba(0,240,255,0.5)';
+  });
+}
+
+function updatePredictionUI() {
+  const el = document.getElementById('predValue');
+  el.textContent = STATE.prediction || '---';
+  el.className = `pred-value ${(STATE.prediction || '').toLowerCase()}`;
+
+  document.getElementById('confFill').style.width = `${STATE.confidence}%`;
+  document.getElementById('confText').textContent = `${STATE.confidence}%`;
+
+  if (STATE.predictedNumber !== undefined) {
+    highlightNumber(STATE.predictedNumber);
+  }
+}
+
+function updateTrendUI() {
+  const container = document.getElementById('trendDots');
+  container.innerHTML = '';
+  const data = STATE.trendData.slice(0, CONFIG.TREND_WINDOW);
+
+  data.forEach(n => {
+    const dot = document.createElement('div');
+    dot.className = `trend-dot ${n >= 5 ? 'b' : 's'}`;
+    dot.textContent = n;
+    container.appendChild(dot);
+  });
+
+  const bigCount = data.filter(n => n >= 5).length;
+  const smallCount = data.filter(n => n < 5).length;
+
+  document.getElementById('statBig').textContent = bigCount;
+  document.getElementById('statSmall').textContent = smallCount;
+
+  // Calculate current streak
+  if (data.length > 0) {
+    let streak = 1;
+    const type = data[0] >= 5;
+    for (let i = 1; i < data.length; i++) {
+      if ((data[i] >= 5) === type) streak++;
+      else break;
+    }
+    document.getElementById('statStreak').textContent = streak;
+  }
+}
+
+function updateMartingaleUI() {
+  const m = STATE.martingale;
+  document.getElementById('martLevel').textContent = `M${m.level}`;
+  document.getElementById('martStreak').textContent = m.streak;
+  const multi = Math.pow(2, m.level);
+  document.getElementById('martMulti').textContent = `${multi}x`;
+
+  const levelEl = document.getElementById('martLevel');
+  if (m.level >= 4) {
+    levelEl.style.color = 'var(--red)';
+    levelEl.style.textShadow = '0 0 15px var(--red)';
+  } else if (m.level >= 2) {
+    levelEl.style.color = 'var(--gold)';
+    levelEl.style.textShadow = '0 0 15px rgba(255,215,0,0.4)';
+  } else {
+    levelEl.style.color = 'var(--green)';
+    levelEl.style.textShadow = '0 0 15px rgba(57,255,20,0.4)';
+  }
+}
+
+function updateHistoryUI() {
+  const tbody = document.getElementById('histBody');
+  tbody.innerHTML = '';
+
+  STATE.predictionHistory.forEach(entry => {
+    const tr = document.createElement('tr');
+    const shortPeriod = entry.period ? String(entry.period).slice(-6) : '--';
+    tr.innerHTML = `
+      <td style="color:var(--muted)">${shortPeriod}</td>
+      <td><strong>${entry.number}</strong></td>
+      <td><span class="badge ${entry.result.toLowerCase()}">${entry.result}</span></td>
+      <td><span class="badge ${entry.prediction.toLowerCase()}">${entry.prediction}</span></td>
+      <td><span class="badge ${entry.win ? 'win' : 'loss'}">${entry.win ? 'WIN' : 'LOSS'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---- TIMER ENGINE ----
+function startTimer() {
+  STATE.timerInterval = setInterval(() => {
+    STATE.timer--;
+
+    if (STATE.timer <= 5 && STATE.timer > 0) sfxTick();
+
+    if (STATE.timer <= 0) {
+      STATE.timer = CONFIG.TIMER_DURATION;
+
+      // If not using real API, simulate new result
+      if (!STATE.apiAvailable) {
+        simulateData();
+      }
+
+      sfxPredict();
+    }
+
+    updateTimerUI();
+  }, 1000);
+}
+
+// ---- START ENGINE ----
+function startEngine() {
+  initNumberIndicators();
+
+  // Initial fetch
+  fetchAndProcess();
+
+  // Timer
+  startTimer();
+
+  // Periodic fetch
+  STATE.fetchInterval = setInterval(fetchAndProcess, CONFIG.FETCH_INTERVAL);
+
+  // Ping check
+  checkPing();
+  STATE.pingInterval = setInterval(checkPing, CONFIG.PING_INTERVAL);
+
+  setOnline(true);
+}
+
+// ---- INIT ----
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
