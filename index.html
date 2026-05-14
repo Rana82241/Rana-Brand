@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>CyberPredict AI — Pro Dashboard</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#00f0ff;--pink:#ff2d95;--purple:#a855f7;--green:#39ff14;--red:#ff3131;
+  --gold:#ffd700;--bg:#06060e;--card:rgba(12,12,28,0.72);
+  --glass:rgba(255,255,255,0.03);--border:rgba(0,240,255,0.12);
+  --text:#e0e8ff;--muted:#6a7b9a;--font:'Segoe UI',system-ui,sans-serif;
+}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:4px}
+
+/* ===== CYBER GRID ===== */
+#cyberGrid{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+#cyberGrid canvas{width:100%;height:100%}
+
+/* ===== FLOATING NEON BLURS ===== */
+.neon-blur{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:.18}
+.neon-blur.nb1{width:300px;height:300px;background:var(--cyan);top:-80px;left:-60px;animation:floatA 12s ease-in-out infinite}
+.neon-blur.nb2{width:250px;height:250px;background:var(--pink);bottom:-50px;right:-40px;animation:floatB 15s ease-in-out infinite}
+.neon-blur.nb3{width:200px;height:200px;background:var(--purple);top:40%;left:60%;animation:floatC 18s ease-in-out infinite}
+@keyframes floatA{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,80px)}}
+@keyframes floatB{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-70px)}}
+@keyframes floatC{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,50px)}}
+
+/* ===== LOADING SCREEN ===== */
+#loadScreen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--bg);transition:opacity .8s}
+#loadScreen.hide{opacity:0;pointer-events:none}
+.ld-logo{font-size:2.2rem;font-weight:900;letter-spacing:5px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:gradShift 3s ease infinite,logoPulse 1.5s ease-in-out infinite}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes logoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.ld-sub{color:var(--muted);font-size:.7rem;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
+.ld-bar{width:220px;height:3px;background:rgba(255,255,255,0.08);border-radius:3px;margin-top:20px;overflow:hidden}
+.ld-bar-in{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));
+  border-radius:3px;animation:loadBar 2.8s ease forwards}
+@keyframes loadBar{to{width:100%}}
+.ld-txt{margin-top:14px;color:var(--muted);font-size:.75rem;letter-spacing:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ===== LOGIN ===== */
+#loginScreen{position:fixed;inset:0;z-index:8888;display:flex;align-items:center;
+  justify-content:center;background:var(--bg);transition:opacity .5s}
+#loginScreen.hide{opacity:0;pointer-events:none}
+.login-card{background:var(--card);backdrop-filter:blur(24px);border:1px solid var(--border);
+  border-radius:18px;padding:36px 28px;width:92%;max-width:380px;text-align:center;
+  box-shadow:0 0 50px rgba(0,240,255,0.06),0 0 100px rgba(168,85,247,0.04)}
+.login-card h2{font-size:1.5rem;margin-bottom:4px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 3s ease infinite}
+.login-card p{color:var(--muted);font-size:.75rem;margin-bottom:20px}
+.login-input{width:100%;padding:13px 16px;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-size:1rem;outline:none;transition:border .3s,box-shadow .3s}
+.login-input:focus{border-color:var(--purple);box-shadow:0 0 16px rgba(168,85,247,0.25)}
+.login-btn{width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;
+  font-size:.95rem;font-weight:700;cursor:pointer;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  color:#000;transition:transform .2s,box-shadow .3s;text-transform:uppercase;animation:gradShift 4s ease infinite}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(168,85,247,0.4)}
+.login-btn:active{transform:scale(.96)}
+.login-error{color:var(--red);font-size:.78rem;margin-top:8px;min-height:1.2em}
+
+/* ===== DASHBOARD ===== */
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;
+  padding:10px;max-width:520px;margin:0 auto}
+#dashboard.show{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ===== HEADER ===== */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+.hdr-brand{font-weight:800;font-size:1.05rem;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 4s ease infinite}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.ping-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pingP 2s infinite}
+@keyframes pingP{0%,100%{opacity:1}50%{opacity:.35}}
+.ping-txt{font-size:.65rem;color:var(--muted)}
+.snd-btn{background:none;border:1px solid var(--border);border-radius:7px;
+  padding:3px 7px;color:var(--cyan);cursor:pointer;font-size:.8rem;transition:all .3s}
+.snd-btn:hover{background:rgba(0,240,255,0.08)}
+.exit-btn{background:none;border:1px solid rgba(255,45,149,0.25);border-radius:7px;
+  padding:3px 9px;color:var(--pink);cursor:pointer;font-size:.7rem;transition:all .3s}
+.exit-btn:hover{background:rgba(255,45,149,0.08)}
+
+/* ===== GLASS CARD ===== */
+.gc{background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;
+  transition:border-color .3s,box-shadow .3s}
+.gc:hover{border-color:rgba(168,85,247,0.25);box-shadow:0 0 20px rgba(168,85,247,0.05)}
+.ct{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ct::before{content:'';width:3px;height:11px;border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--purple))}
+
+/* ===== TIMER ===== */
+.timer-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.period-info{flex:1;min-width:0}
+.period-lbl{font-size:.65rem;color:var(--muted)}
+.period-num{font-size:1rem;font-weight:800;color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,240,255,0.35);word-break:break-all}
+.next-period{font-size:.75rem;color:var(--purple);margin-top:2px;font-weight:600}
+.timer-dsp{display:flex;align-items:center;gap:3px}
+.t-dig{background:linear-gradient(135deg,rgba(0,240,255,0.1),rgba(168,85,247,0.08));
+  border:1px solid var(--border);border-radius:7px;padding:7px 9px;
+  font-size:1.3rem;font-weight:900;color:var(--cyan);min-width:32px;text-align:center;
+  text-shadow:0 0 10px rgba(0,240,255,0.4)}
+.t-sep{font-size:1.3rem;color:var(--pink);animation:blink 1s step-end infinite}
+.timer-bar{width:100%;height:3px;background:rgba(255,255,255,0.05);border-radius:3px;margin-top:8px;overflow:hidden}
+.timer-bar-fill{height:100%;border-radius:3px;transition:width 1s linear;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink))}
+
+/* ===== AI THINKING ===== */
+.ai-thinking{text-align:center;padding:16px 0 8px}
+.ai-think-txt{font-size:1rem;font-weight:700;letter-spacing:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:gradShift 2s ease infinite,pulseScale 1.2s ease-in-out infinite}
+@keyframes pulseScale{0%,100%{opacity:.6;transform:scale(.97)}50%{opacity:1;transform:scale(1.02)}}
+.ai-dots{display:inline-block}
+.ai-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--purple);margin:0 2px;animation:dotBounce 1.4s ease-in-out infinite}
+.ai-dots span:nth-child(2){animation-delay:.2s}
+.ai-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+/* ===== PREDICTION ===== */
+.pred-result{text-align:center;padding:14px 0 8px}
+.pred-lbl{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.pred-val{font-size:2.6rem;font-weight:900;margin:4px 0;letter-spacing:4px;
+  text-shadow:0 0 30px currentColor;transition:color .4s,text-shadow .4s}
+.pred-val.big{color:var(--pink)}
+.pred-val.small{color:var(--cyan)}
+.pred-conf{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.conf-bar{width:130px;height:6px;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden}
+.conf-fill{height:100%;border-radius:6px;transition:width .5s ease;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink))}
+.conf-txt{font-size:.85rem;font-weight:700;color:var(--gold)}
+.ai-mode-tag{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:6px;
+  font-size:.65rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  border:1px solid var(--border);background:var(--glass)}
+.ai-mode-tag.streak{color:var(--pink);border-color:rgba(255,45,149,0.3)}
+.ai-mode-tag.reversal{color:var(--cyan);border-color:rgba(0,240,255,0.3)}
+.ai-mode-tag.weighted{color:var(--purple);border-color:rgba(168,85,247,0.3)}
+.ai-mode-tag.trend{color:var(--green);border-color:rgba(57,255,20,0.3)}
+
+/* ===== SUGGESTED NUMBERS ===== */
+.sugg-nums{display:flex;justify-content:center;gap:6px;margin:10px 0;flex-wrap:wrap}
+.sugg-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:.85rem;transition:all .4s;position:relative}
+.sugg-num.big-n{border:2px solid var(--pink);color:var(--pink);box-shadow:0 0 8px rgba(255,45,149,0.2)}
+.sugg-num.small-n{border:2px solid var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(0,240,255,0.2)}
+.sugg-num.active{transform:scale(1.22);
+  background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(0,240,255,0.15));
+  box-shadow:0 0 16px rgba(168,85,247,0.35)}
+.sugg-num.suggested{border-width:2px;animation:sugPulse 1.5s ease-in-out infinite}
+@keyframes sugPulse{0%,100%{box-shadow:0 0 8px rgba(168,85,247,0.2)}50%{box-shadow:0 0 18px rgba(168,85,247,0.5)}}
+
+/* ===== ACTION BTNS ===== */
+.act-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.glow-btn{padding:11px;border:none;border-radius:10px;font-size:.82rem;font-weight:700;
+  cursor:pointer;letter-spacing:1px;transition:all .3s;text-transform:uppercase;position:relative;overflow:hidden}
+.glow-btn::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent)}
+.glow-btn:hover::after{opacity:1}
+.glow-btn:active{transform:scale(.95)}
+.glow-btn.primary{background:linear-gradient(135deg,var(--cyan),#0088aa);color:#000;
+  box-shadow:0 0 16px rgba(0,240,255,0.2)}
+.glow-btn.primary:hover{box-shadow:0 0 28px rgba(0,240,255,0.4)}
+.glow-btn.danger{background:linear-gradient(135deg,var(--pink),#aa0044);color:#fff;
+  box-shadow:0 0 16px rgba(255,45,149,0.2)}
+.glow-btn.danger:hover{box-shadow:0 0 28px rgba(255,45,149,0.4)}
+
+/* ===== TREND ===== */
+.trend-dots{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}
+.trend-dot{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:.55rem;font-weight:700;transition:all .3s}
+.trend-dot.b{background:rgba(255,45,149,0.18);color:var(--pink);border:1px solid rgba(255,45,149,0.25)}
+.trend-dot.s{background:rgba(0,240,255,0.12);color:var(--cyan);border:1px solid rgba(0,240,255,0.25)}
+.trend-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.trend-stat{text-align:center;padding:7px;background:var(--glass);border-radius:9px;border:1px solid var(--border)}
+.trend-stat-v{font-size:1rem;font-weight:800}
+.trend-stat-l{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ===== MODE BTNS ===== */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.mode-btn{padding:9px;border-radius:9px;border:1px solid var(--border);
+  background:var(--glass);color:var(--text);font-size:.75rem;font-weight:600;
+  cursor:pointer;transition:all .3s;text-align:center}
+.mode-btn:hover{border-color:var(--purple);background:rgba(168,85,247,0.06)}
+.mode-btn.active{border-color:var(--purple);background:rgba(168,85,247,0.1);
+  color:var(--purple);box-shadow:0 0 12px rgba(168,85,247,0.12)}
+
+/* ===== MARTINGALE ===== */
+.mart-row{display:flex;align-items:center;gap:10px}
+.mart-lvl{font-size:1.8rem;font-weight:900;text-shadow:0 0 12px currentColor}
+.mart-info{flex:1}
+.mart-info-txt{font-size:.7rem;color:var(--muted)}
+.mart-str{font-weight:700}
+.mart-rst{padding:7px 14px;border-radius:8px;border:1px solid rgba(255,215,0,0.25);
+  background:rgba(255,215,0,0.06);color:var(--gold);font-size:.7rem;
+  cursor:pointer;transition:all .3s;font-weight:600}
+.mart-rst:hover{background:rgba(255,215,0,0.12);border-color:var(--gold)}
+
+/* ===== HISTORY ===== */
+.hist-wrap{max-height:280px;overflow-y:auto;scroll-behavior:smooth}
+.hist-tbl{width:100%;border-collapse:collapse}
+.hist-tbl th{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(12,12,28,0.95)}
+.hist-tbl td{padding:6px 4px;font-size:.75rem;border-bottom:1px solid rgba(255,255,255,0.02)}
+.hist-tbl tr{transition:background .2s}
+.hist-tbl tr:hover td{background:rgba(168,85,247,0.03)}
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:.65rem;font-weight:700}
+.badge.big{background:rgba(255,45,149,0.12);color:var(--pink)}
+.badge.small{background:rgba(0,240,255,0.1);color:var(--cyan)}
+.badge.win{background:rgba(57,255,20,0.12);color:var(--green)}
+.badge.loss{background:rgba(255,49,49,0.12);color:var(--red)}
+
+/* ===== WIN RATE ===== */
+.wr-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px}
+.wr-item{text-align:center}
+.wr-val{font-size:1.1rem;font-weight:800}
+.wr-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ===== ERROR ===== */
+.err-ban{background:rgba(255,49,49,0.08);border:1px solid rgba(255,49,49,0.25);
+  border-radius:9px;padding:8px 12px;margin-bottom:8px;font-size:.75rem;color:var(--red);
+  display:none;align-items:center;gap:6px}
+.err-ban.show{display:flex}
+
+/* ===== STATUS ===== */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px;text-align:center;font-size:.65rem;color:var(--muted)}
+.status-dot{width:5px;height:5px;border-radius:50%}
+.status-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+
+/* ===== TOAST ===== */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);
+  padding:10px 20px;border-radius:10px;font-size:.8rem;font-weight:600;z-index:9000;
+  backdrop-filter:blur(16px);border:1px solid var(--border);background:var(--card);
+  transition:transform .35s ease,opacity .35s;opacity:0;pointer-events:none;
+  white-space:nowrap;max-width:90%}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:380px){
+  .pred-val{font-size:2rem}
+  .t-dig{font-size:1rem;padding:5px 7px;min-width:28px}
+  .sugg-num{width:28px;height:28px;font-size:.7rem}
+  .trend-dot{width:16px;height:16px;font-size:.5rem}
+  .gc{padding:10px}
+}
+@media(min-width:521px){#dashboard{padding:16px}.gc{padding:18px}}
+</style>
+</head>
+<body>
+
+<div id="cyberGrid"><canvas id="gridCanvas"></canvas></div>
+<div class="neon-blur nb1"></div>
+<div class="neon-blur nb2"></div>
+<div class="neon-blur nb3"></div>
+
+<!-- LOADING -->
+<div id="loadScreen">
+  <div class="ld-logo">CYBERPREDICT</div>
+  <div class="ld-sub">Advanced AI Engine v2.0</div>
+  <div class="ld-bar"><div class="ld-bar-in"></div></div>
+  <div class="ld-txt">INITIALIZING NEURAL NETWORK...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none">
+  <div class="login-card">
+    <h2>ACCESS TERMINAL</h2>
+    <p>Enter authorization code to access prediction engine</p>
+    <input class="login-input" id="loginPass" type="password" placeholder="Enter access code..." autocomplete="off"/>
+    <button class="login-btn" id="loginBtn" onclick="handleLogin()">AUTHENTICATE</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="hdr">
+    <div class="hdr-brand">CYBERPREDICT AI</div>
+    <div class="hdr-right">
+      <div style="display:flex;align-items:center;gap:3px">
+        <div class="ping-dot" id="pingDot"></div>
+        <span class="ping-txt" id="pingTxt">--ms</span>
+      </div>
+      <button class="snd-btn" id="sndBtn" onclick="toggleSound()" title="Sound">🔊</button>
+      <button class="exit-btn" onclick="handleLogout()">EXIT</button>
+    </div>
+  </div>
+
+  <div class="err-ban" id="errBan"><span>⚠</span><span id="errTxt">API error</span></div>
+
+  <!-- TIMER -->
+  <div class="gc">
+    <div class="ct">Period Tracker</div>
+    <div class="timer-row">
+      <div class="period-info">
+        <div class="period-lbl">CURRENT PERIOD</div>
+        <div class="period-num" id="curPeriod">----</div>
+        <div class="next-period">NEXT: <span id="nextPeriod">----</span></div>
+      </div>
+      <div class="timer-dsp">
+        <div class="t-dig" id="tMin">0</div>
+        <div class="t-sep">:</div>
+        <div class="t-dig" id="tS1">0</div>
+        <div class="t-dig" id="tS2">0</div>
+      </div>
+    </div>
+    <div class="timer-bar"><div class="timer-bar-fill" id="tBarFill"></div></div>
+  </div>
+
+  <!-- PREDICTION -->
+  <div class="gc" id="predCard">
+    <div class="ct">AI Prediction</div>
+    <div id="aiThinking" class="ai-thinking" style="display:none">
+      <div class="ai-think-txt">AI THINKING <div class="ai-dots"><span></span><span></span><span></span></div></div>
+    </div>
+    <div id="predContent">
+      <div class="pred-result">
+        <div class="pred-lbl">NEXT PERIOD RESULT</div>
+        <div class="pred-val" id="predVal">---</div>
+        <div class="pred-conf">
+          <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+          <span class="conf-txt" id="confTxt">--%</span>
+        </div>
+        <div id="aiModeTag" class="ai-mode-tag" style="display:none"></div>
+      </div>
+      <div class="sugg-nums" id="suggNums"></div>
+      <div class="act-row">
+        <button class="glow-btn primary" onclick="manualPick('BIG')">BIG (5-9)</button>
+        <button class="glow-btn danger" onclick="manualPick('SMALL')">SMALL (0-4)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREND -->
+  <div class="gc">
+    <div class="ct">Trend Analysis</div>
+    <div class="trend-dots" id="trendDots"></div>
+    <div class="trend-stats">
+      <div class="trend-stat"><div class="trend-stat-v" id="stBig" style="color:var(--pink)">0</div><div class="trend-stat-l">Big</div></div>
+      <div class="trend-stat"><div class="trend-stat-v" id="stSmall" style="color:var(--cyan)">0</div><div class="trend-stat-l">Small</div></div>
+      <div class="trend-stat"><div class="trend-stat-v" id="stStreak" style="color:var(--gold)">0</div><div class="trend-stat-l">Streak</div></div>
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn active" id="modeFollow" onclick="setMode('follow')">📈 Trend Follow</button>
+      <button class="mode-btn" id="modeReverse" onclick="setMode('reverse')">🔄 Smart Reverse</button>
+    </div>
+  </div>
+
+  <!-- MARTINGALE -->
+  <div class="gc">
+    <div class="ct">Martingale Tracker</div>
+    <div class="mart-row">
+      <div class="mart-lvl" id="martLvl">M0</div>
+      <div class="mart-info">
+        <div class="mart-info-txt">Loss Streak: <span class="mart-str" id="martStr">0</span></div>
+        <div class="mart-info-txt">Multiplier: <span class="mart-str" id="martMul">1x</span></div>
+      </div>
+      <button class="mart-rst" onclick="resetMart()">RESET</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="gc">
+    <div class="ct">Live History</div>
+    <div class="wr-row">
+      <div class="wr-item"><div class="wr-val" id="wrWins" style="color:var(--green)">0</div><div class="wr-lbl">Wins</div></div>
+      <div class="wr-item"><div class="wr-val" id="wrLoss" style="color:var(--red)">0</div><div class="wr-lbl">Losses</div></div>
+      <div class="wr-item"><div class="wr-val" id="wrRate" style="color:var(--gold)">0%</div><div class="wr-lbl">Win Rate</div></div>
+    </div>
+    <div class="hist-wrap" id="histWrap">
+      <table class="hist-tbl">
+        <thead><tr><th>Period</th><th>Num</th><th>Result</th><th>Pred</th><th>Status</th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="sDot"></div>
+    <span id="sTxt">Connecting...</span>
+  </div>
+</div>
+
+<script>
+/* =================================================================
+   CYBERPREDICT AI v2.0 — ADVANCED WINGO PREDICTION ENGINE
+   ================================================================= */
+
+const CFG = {
+  API: 'https://sit-webapi.mggametransit.com',
+  TENANT: 6004,
+  PASS: '786786',
+  DURATION: 60,
+  HIST_LIMIT: 30,
+  TREND_WIN: 30,
+  FETCH_INT: 4000,
+  PING_INT: 12000
+};
+
+const S = {
+  loggedIn: false, soundOn: true, mode: 'follow',
+  timer: CFG.DURATION, curPeriod: '', nextPeriod: '',
+  lastResult: null, prediction: null, confidence: 0,
+  predictedNumber: null, aiMode: '', isThinking: false,
+  history: [], trendData: [], predHistory: [],
+  mart: { level: 0, streak: 0 },
+  wins: 0, losses: 0,
+  online: true, fetchErr: 0, apiOk: false,
+  timerInt: null, fetchInt: null, pingInt: null,
+  lastPeriodProcessed: '', suggestedNums: []
+};
+
+/* ===== AUDIO ===== */
+const ACtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+function ensureA() { if (!actx) actx = new ACtx(); }
+function tone(f, d, t = 'sine', v = 0.12) {
+  if (!S.soundOn) return;
+  try { ensureA(); const o = actx.createOscillator(), g = actx.createGain();
+    o.type = t; o.frequency.value = f; g.gain.setValueAtTime(v, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + d);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + d);
+  } catch (e) {}
+}
+function sfxTick() { tone(900, 0.04, 'square', 0.04); }
+function sfxPred() { tone(1200, 0.12); setTimeout(() => tone(1500, 0.15), 80); }
+function sfxWin() { tone(880, 0.08); setTimeout(() => tone(1100, 0.08), 80); setTimeout(() => tone(1400, 0.15), 160); }
+function sfxLoss() { tone(300, 0.25, 'sawtooth', 0.08); }
+function sfxAlert() { tone(600, 0.08, 'triangle'); setTimeout(() => tone(600, 0.08, 'triangle'), 120); }
+
+/* ===== GRID ===== */
+function initGrid() {
+  const c = document.getElementById('gridCanvas'), x = c.getContext('2d');
+  let w, h; function rs() { w = c.width = innerWidth; h = c.height = innerHeight; }
+  rs(); addEventListener('resize', rs);
+  const cols = 35, rows = 22; let off = 0;
+  (function draw() {
+    x.clearRect(0, 0, w, h);
+    const cw = w / cols, rh = h / rows; off += 0.25;
+    for (let i = 0; i <= rows; i++) {
+      const y = i * rh + (off % rh);
+      x.strokeStyle = `rgba(0,240,255,${0.025 + 0.015 * Math.sin(i * 0.4 + off * 0.015)})`;
+      x.lineWidth = 0.5; x.beginPath(); x.moveTo(0, y); x.lineTo(w, y); x.stroke();
+    }
+    for (let i = 0; i <= cols; i++) {
+      x.strokeStyle = `rgba(168,85,247,${0.02 + 0.01 * Math.sin(i * 0.3 + off * 0.01)})`;
+      x.lineWidth = 0.5; x.beginPath(); x.moveTo(i * cw, 0); x.lineTo(i * cw, h); x.stroke();
+    }
+    for (let i = 0; i <= cols; i += 5) for (let j = 0; j <= rows; j += 5) {
+      const px = i * cw, py = j * rh + (off % rh);
+      x.fillStyle = `rgba(168,85,247,${0.12 + 0.08 * Math.sin(off * 0.025 + i + j)})`;
+      x.beginPath(); x.arc(px, py, 1.5, 0, Math.PI * 2); x.fill();
+    }
+    requestAnimationFrame(draw);
+  })();
+}
+
+/* ===== TOAST ===== */
+function toast(m, d = 2200) {
+  const t = document.getElementById('toast'); t.textContent = m;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), d);
+}
+
+/* ===== LOAD / LOGIN ===== */
+function initApp() {
+  initGrid();
+  setTimeout(() => {
+    document.getElementById('loadScreen').classList.add('hide');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginPass').focus();
+  }, 3000);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') handleLogin();
+});
+function handleLogin() {
+  const p = document.getElementById('loginPass').value.trim();
+  if (!p) { document.getElementById('loginError').textContent = 'Please enter access code'; return; }
+  if (p !== CFG.PASS) { document.getElementById('loginError').textContent = 'ACCESS DENIED — Invalid code'; sfxAlert(); return; }
+  S.loggedIn = true;
+  document.getElementById('loginScreen').classList.add('hide');
+  document.getElementById('dashboard').classList.add('show');
+  sfxPred(); toast('ACCESS GRANTED — Neural Engine Online');
+  startEngine();
+}
+function handleLogout() {
+  S.loggedIn = false;
+  clearInterval(S.timerInt); clearInterval(S.fetchInt); clearInterval(S.pingInt);
+  document.getElementById('dashboard').classList.remove('show');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').classList.remove('hide');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = ''; toast('Session terminated');
+}
+function toggleSound() {
+  S.soundOn = !S.soundOn;
+  document.getElementById('sndBtn').textContent = S.soundOn ? '🔊' : '🔇';
+  toast(S.soundOn ? 'Sound ON' : 'Sound OFF');
+}
+
+/* ===== NUMBER INDICATORS ===== */
+function initNums() {
+  const c = document.getElementById('suggNums'); c.innerHTML = '';
+  for (let i = 0; i <= 9; i++) {
+    const d = document.createElement('div');
+    d.className = `sugg-num ${i >= 5 ? 'big-n' : 'small-n'}`;
+    d.id = `nc${i}`; d.textContent = i; c.appendChild(d);
+  }
+}
+function highlightNums() {
+  for (let i = 0; i <= 9; i++) {
+    const el = document.getElementById(`nc${i}`);
+    el.classList.toggle('active', i === S.predictedNumber);
+    el.classList.toggle('suggested', S.suggestedNums.includes(i) && i !== S.predictedNumber);
+  }
+}
+
+/* ===== API FETCH ===== */
+async function fetchData() {
+  const endpoints = [
+    `${CFG.API}/api/webapi/GetNoapolygon/GetGameIssue`,
+    `${CFG.API}/api/webapi/GetGameIssue`
+  ];
+  const body = JSON.stringify({ typeid: 1, language: 0, pageno: 0, pageSize: CFG.TREND_WIN });
+
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (!r.ok) continue;
+      const d = await r.json();
+      S.fetchErr = 0; setOnline(true); hideErr(); S.apiOk = true;
+      return d;
+    } catch (e) { continue; }
+  }
+  S.fetchErr++;
+  if (S.fetchErr >= 3) { showErr('API unreachable — simulation mode active'); setOnline(false); }
+  return null;
+}
+
+async function fetchAndProcess() {
+  const d = await fetchData();
+  if (d && d.data) processApi(d.data); else simData();
+}
+
+function processApi(api) {
+  try {
+    const list = api.list || api.gameList || api || [];
+    if (!Array.isArray(list) || !list.length) { simData(); return; }
+
+    const results = list.map(it => {
+      const n = parseInt(it.number || it.result || it.num || '0');
+      const p = it.issueNumber || it.period || it.issue || '';
+      return { period: p, number: isNaN(n) ? 0 : n % 10 };
+    });
+
+    if (api.issue || api.issueNumber) S.curPeriod = api.issue || api.issueNumber;
+    else if (results.length) S.curPeriod = results[0].period;
+
+    if (api.second !== undefined) S.timer = Math.max(0, parseInt(api.second));
+
+    S.trendData = results.map(r => r.number).slice(0, CFG.TREND_WIN);
+
+    const latestPeriod = results[0]?.period || '';
+    if (latestPeriod && latestPeriod !== S.lastPeriodProcessed) {
+      if (S.lastPeriodProcessed && S.prediction) {
+        evalPred(results[0].number, latestPeriod);
+      }
+      S.lastPeriodProcessed = latestPeriod;
+      S.lastResult = results[0].number;
+      S.nextPeriod = incPeriod(latestPeriod);
+      showThinking();
+    }
+
+    updateUI();
+  } catch (e) { console.warn('Process err:', e); simData(); }
+}
+
+function incPeriod(p) {
+  const s = String(p), n = parseInt(s.slice(-4)) + 1;
+  return s.slice(0, -4) + String(n).padStart(4, '0');
+}
+
+/* ===== SIMULATION ===== */
+function simData() {
+  if (!S.trendData.length) {
+    for (let i = 0; i < CFG.TREND_WIN; i++) S.trendData.push(Math.floor(Math.random() * 10));
+  }
+  const now = new Date();
+  const ds = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const md = now.getHours() * 60 + now.getMinutes();
+  const pid = Math.floor(md) + 1;
+
+  if (S.timer <= 0) {
+    const newN = Math.floor(Math.random() * 10);
+    S.trendData.unshift(newN);
+    S.trendData = S.trendData.slice(0, CFG.TREND_WIN);
+
+    const curP = `${ds}${String(pid).padStart(4, '0')}`;
+    if (S.prediction) evalPred(newN, curP);
+    S.lastResult = newN;
+    S.timer = CFG.DURATION;
+
+    const nextPid = pid + 1;
+    S.curPeriod = `${ds}${String(nextPid).padStart(4, '0')}`;
+    S.nextPeriod = `${ds}${String(nextPid + 1).padStart(4, '0')}`;
+
+    showThinking();
+  } else {
+    S.curPeriod = `${ds}${String(pid).padStart(4, '0')}`;
+    S.nextPeriod = `${ds}${String(pid + 1).padStart(4, '0')}`;
+  }
+
+  updateUI();
+}
+
+/* ===== AI THINKING ANIMATION ===== */
+function showThinking() {
+  S.isThinking = true;
+  document.getElementById('aiThinking').style.display = 'block';
+  document.getElementById('predContent').style.opacity = '0.3';
+
+  setTimeout(() => {
+    S.isThinking = false;
+    document.getElementById('aiThinking').style.display = 'none';
+    document.getElementById('predContent').style.opacity = '1';
+    genPrediction();
+    updateUI();
+    sfxPred();
+  }, 1800);
+}
+
+/* ===== ADVANCED PREDICTION ENGINE ===== */
+function genPrediction() {
+  const d = S.trendData;
+  if (d.length < 3) { S.prediction = 'BIG'; S.confidence = 55; S.aiMode = 'weighted'; return; }
+
+  const last10 = d.slice(0, 10);
+  const last5 = d.slice(0, 5);
+  const all = d.slice(0, CFG.TREND_WIN);
+
+  // Count analysis
+  let bigAll = 0, smallAll = 0, big10 = 0, small10 = 0, big5 = 0, small5 = 0;
+  all.forEach(n => n >= 5 ? bigAll++ : smallAll++);
+  last10.forEach(n => n >= 5 ? big10++ : small10++);
+  last5.forEach(n => n >= 5 ? big5++ : small5++);
+
+  // Streak detection
+  let streak = 1;
+  const streakType = d[0] >= 5 ? 'BIG' : 'SMALL';
+  for (let i = 1; i < d.length; i++) {
+    if ((d[i] >= 5 ? 'BIG' : 'SMALL') === streakType) streak++;
+    else break;
+  }
+
+  // Alternation pattern detection
+  let altCount = 0;
+  for (let i = 0; i < Math.min(d.length - 1, 10); i++) {
+    if ((d[i] >= 5) !== (d[i + 1] >= 5)) altCount++;
+  }
+
+  // Consecutive pair detection
+  let pairCount = 0;
+  for (let i = 0; i < Math.min(d.length - 1, 8); i++) {
+    if ((d[i] >= 5) === (d[i + 1] >= 5)) pairCount++;
+  }
+
+  // Moving average analysis
+  const avg5 = last5.reduce((a, b) => a + b, 0) / last5.length;
+  const avg10 = last10.reduce((a, b) => a + b, 0) / last10.length;
+  const trendUp = avg5 > avg10;
+
+  // Number frequency analysis (which numbers are due)
+  const freq = new Array(10).fill(0);
+  last10.forEach(n => freq[n]++);
+
+  // Weighted scoring system
+  let bigScore = 0;
+  let detectedMode = 'weighted';
+
+  // 1. STREAK REVERSAL DETECTION (strongest signal)
+  if (streak >= 5) {
+    bigScore += streakType === 'BIG' ? -25 : 25;
+    detectedMode = 'reversal';
+  } else if (streak >= 4) {
+    bigScore += streakType === 'BIG' ? -18 : 18;
+    detectedMode = 'reversal';
+  } else if (streak >= 3) {
+    bigScore += streakType === 'BIG' ? -12 : 12;
+    detectedMode = 'reversal';
+  }
+
+  // 2. OVEREXTENDED TREND DETECTION
+  if (big5 >= 4) {
+    bigScore -= 15;
+    if (detectedMode === 'weighted') detectedMode = 'reversal';
+  } else if (small5 >= 4) {
+    bigScore += 15;
+    if (detectedMode === 'weighted') detectedMode = 'reversal';
+  }
+
+  // 3. RECENT TREND BIAS
+  bigScore += (big10 - small10) * 2;
+
+  // 4. ALTERNATION PATTERN
+  if (altCount >= 7) {
+    // High alternation — predict opposite of last
+    bigScore += d[0] >= 5 ? -12 : 12;
+    detectedMode = 'streak';
+  }
+
+  // 5. PAIR PATTERN (same-same common)
+  if (pairCount >= 6) {
+    bigScore += d[0] >= 5 ? 8 : -8;
+    if (detectedMode === 'weighted') detectedMode = 'streak';
+  }
+
+  // 6. MOVING AVERAGE TREND
+  bigScore += trendUp ? 4 : -4;
+
+  // 7. FREQUENCY BALANCING (slight mean reversion)
+  bigScore += (smallAll - bigAll) * 1;
+
+  // 8. WEIGHTED RECENT HISTORY (last 3 entries weighted heavier)
+  const w = [3, 2, 1];
+  for (let i = 0; i < 3 && i < d.length; i++) {
+    bigScore += d[i] >= 5 ? -w[i] : w[i];
+  }
+
+  // Apply mode
+  let pred = bigScore >= 0 ? 'BIG' : 'SMALL';
+  if (S.mode === 'reverse') pred = pred === 'BIG' ? 'SMALL' : 'BIG';
+  if (S.mode === 'follow') {
+    if (detectedMode === 'weighted') detectedMode = 'trend';
+  }
+
+  // Confidence calculation
+  const absScore = Math.abs(bigScore);
+  let conf = Math.min(96, 58 + absScore * 1.2);
+  if (streak >= 4) conf = Math.min(97, conf + 5);
+  if (altCount >= 5 && altCount <= 7) conf -= 6;
+  if (streak === 1 && altCount < 4) conf -= 4;
+  conf = Math.max(55, Math.min(97, Math.round(conf)));
+
+  // Estimate best numbers
+  const range = pred === 'BIG' ? [5, 6, 7, 8, 9] : [0, 1, 2, 3, 4];
+  const rankedNums = range.map(n => ({ n, f: freq[n] })).sort((a, b) => a.f - b.f);
+  const primaryNum = rankedNums[0].n;
+  const sugNums = rankedNums.slice(0, 3).map(r => r.n);
+
+  S.prediction = pred;
+  S.confidence = conf;
+  S.predictedNumber = primaryNum;
+  S.suggestedNums = sugNums;
+  S.aiMode = detectedMode;
+}
+
+/* ===== EVALUATE PREDICTION ===== */
+function evalPred(num, period) {
+  const resType = num >= 5 ? 'BIG' : 'SMALL';
+  const win = S.prediction === resType;
+
+  S.predHistory.unshift({
+    period: period || S.curPeriod, number: num,
+    result: resType, prediction: S.prediction, win
+  });
+  S.predHistory = S.predHistory.slice(0, CFG.HIST_LIMIT);
+
+  if (win) {
+    S.mart = { level: 0, streak: 0 };
+    S.wins++; sfxWin(); toast('WIN — Prediction correct!');
+  } else {
+    S.mart.streak++;
+    S.mart.level = Math.min(S.mart.streak, 7);
+    S.losses++; sfxLoss(); toast('LOSS — Recalibrating AI...');
+  }
+}
+
+/* ===== CONTROLS ===== */
+function setMode(m) {
+  S.mode = m;
+  document.getElementById('modeFollow').classList.toggle('active', m === 'follow');
+  document.getElementById('modeReverse').classList.toggle('active', m === 'reverse');
+  if (!S.isThinking) { genPrediction(); updateUI(); }
+  sfxTick(); toast(m === 'follow' ? 'Trend Follow Mode' : 'Smart Reverse Mode');
+}
+function manualPick(t) {
+  S.prediction = t; S.confidence = 100;
+  S.predictedNumber = t === 'BIG' ? 7 : 2;
+  S.suggestedNums = t === 'BIG' ? [5, 7, 8] : [0, 2, 3];
+  S.aiMode = 'manual';
+  updateUI(); sfxPred(); toast(`Manual override: ${t}`);
+}
+function resetMart() {
+  S.mart = { level: 0, streak: 0 }; updateMartUI(); sfxTick(); toast('Martingale reset');
+}
+
+/* ===== PING ===== */
+async function checkPing() {
+  const t0 = performance.now();
+  try {
+    await fetch(`${CFG.API}/api/webapi/health`, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+    document.getElementById('pingTxt').textContent = `${Math.round(performance.now() - t0)}ms`;
+    setOnline(true);
+  } catch { document.getElementById('pingTxt').textContent = 'SIM'; }
+}
+function setOnline(on) {
+  S.online = on;
+  const pd = document.getElementById('pingDot'), sd = document.getElementById('sDot');
+  pd.style.background = on ? 'var(--green)' : 'var(--gold)';
+  pd.style.boxShadow = `0 0 8px ${on ? 'var(--green)' : 'var(--gold)'}`;
+  sd.className = `status-dot ${on ? 'on' : 'off'}`;
+  document.getElementById('sTxt').textContent = on ? 'Connected to neural engine' : 'Simulation mode — AI active';
+}
+function showErr(m) { document.getElementById('errTxt').textContent = m; document.getElementById('errBan').classList.add('show'); }
+function hideErr() { document.getElementById('errBan').classList.remove('show'); }
+
+/* ===== UPDATE UI ===== */
+function updateUI() {
+  updateTimerUI(); updatePredUI(); updateTrendUI(); updateMartUI(); updateHistUI(); updatePeriodUI();
+}
+function updatePeriodUI() {
+  document.getElementById('curPeriod').textContent = S.curPeriod || '----';
+  document.getElementById('nextPeriod').textContent = S.nextPeriod || '----';
+}
+function updateTimerUI() {
+  const t = Math.max(0, S.timer), m = Math.floor(t / 60), s = t % 60;
+  document.getElementById('tMin').textContent = m;
+  document.getElementById('tS1').textContent = Math.floor(s / 10);
+  document.getElementById('tS2').textContent = s % 10;
+  document.getElementById('tBarFill').style.width = `${(t / CFG.DURATION) * 100}%`;
+  document.querySelectorAll('.t-dig').forEach(d => {
+    d.style.color = t <= 10 ? 'var(--red)' : 'var(--cyan)';
+    d.style.textShadow = t <= 10 ? '0 0 12px var(--red)' : '0 0 10px rgba(0,240,255,0.4)';
+  });
+}
+function updatePredUI() {
+  if (S.isThinking) return;
+  const el = document.getElementById('predVal');
+  el.textContent = S.prediction || '---';
+  el.className = `pred-val ${(S.prediction || '').toLowerCase()}`;
+  document.getElementById('confFill').style.width = `${S.confidence}%`;
+  document.getElementById('confTxt').textContent = `${S.confidence}%`;
+
+  // AI Mode tag
+  const mTag = document.getElementById('aiModeTag');
+  if (S.aiMode) {
+    mTag.style.display = 'inline-block';
+    const labels = { streak: 'STREAK DETECT', reversal: 'REVERSAL MODE', weighted: 'WEIGHTED AVG', trend: 'TREND FOLLOW', manual: 'MANUAL' };
+    mTag.textContent = labels[S.aiMode] || S.aiMode.toUpperCase();
+    mTag.className = `ai-mode-tag ${S.aiMode}`;
+  }
+
+  highlightNums();
+}
+function updateTrendUI() {
+  const c = document.getElementById('trendDots'); c.innerHTML = '';
+  const d = S.trendData.slice(0, CFG.TREND_WIN);
+  d.forEach(n => {
+    const dot = document.createElement('div');
+    dot.className = `trend-dot ${n >= 5 ? 'b' : 's'}`; dot.textContent = n; c.appendChild(dot);
+  });
+  const bc = d.filter(n => n >= 5).length, sc = d.filter(n => n < 5).length;
+  document.getElementById('stBig').textContent = bc;
+  document.getElementById('stSmall').textContent = sc;
+  if (d.length) {
+    let sk = 1; const tp = d[0] >= 5;
+    for (let i = 1; i < d.length; i++) { if ((d[i] >= 5) === tp) sk++; else break; }
+    document.getElementById('stStreak').textContent = sk;
+  }
+}
+function updateMartUI() {
+  const m = S.mart;
+  document.getElementById('martLvl').textContent = `M${m.level}`;
+  document.getElementById('martStr').textContent = m.streak;
+  document.getElementById('martMul').textContent = `${Math.pow(2, m.level)}x`;
+  const el = document.getElementById('martLvl');
+  if (m.level >= 4) { el.style.color = 'var(--red)'; }
+  else if (m.level >= 2) { el.style.color = 'var(--gold)'; }
+  else { el.style.color = 'var(--green)'; }
+}
+function updateHistUI() {
+  const tb = document.getElementById('histBody'); tb.innerHTML = '';
+  S.predHistory.forEach(e => {
+    const tr = document.createElement('tr');
+    const sp = e.period ? String(e.period).slice(-6) : '--';
+    tr.innerHTML = `<td style="color:var(--muted)">${sp}</td>
+      <td><strong>${e.number}</strong></td>
+      <td><span class="badge ${e.result.toLowerCase()}">${e.result}</span></td>
+      <td><span class="badge ${e.prediction.toLowerCase()}">${e.prediction}</span></td>
+      <td><span class="badge ${e.win ? 'win' : 'loss'}">${e.win ? 'WIN' : 'LOSS'}</span></td>`;
+    tb.appendChild(tr);
+  });
+  // Auto-scroll
+  const w = document.getElementById('histWrap');
+  w.scrollTop = 0;
+
+  // Win rate
+  const total = S.wins + S.losses;
+  document.getElementById('wrWins').textContent = S.wins;
+  document.getElementById('wrLoss').textContent = S.losses;
+  document.getElementById('wrRate').textContent = total ? `${Math.round((S.wins / total) * 100)}%` : '0%';
+}
+
+/* ===== TIMER ===== */
+function startTimer() {
+  S.timerInt = setInterval(() => {
+    S.timer--;
+    if (S.timer <= 5 && S.timer > 0) sfxTick();
+    if (S.timer <= 0) {
+      if (!S.apiOk) simData();
+      else S.timer = CFG.DURATION;
+      sfxPred();
+    }
+    updateTimerUI();
+  }, 1000);
+}
+
+/* ===== START ===== */
+function startEngine() {
+  initNums(); fetchAndProcess(); startTimer();
+  S.fetchInt = setInterval(fetchAndProcess, CFG.FETCH_INT);
+  checkPing(); S.pingInt = setInterval(checkPing, CFG.PING_INT);
+  setOnline(true);
+  // Initial prediction
+  setTimeout(() => { if (!S.isThinking) { genPrediction(); updateUI(); } }, 500);
+}
+
+addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
