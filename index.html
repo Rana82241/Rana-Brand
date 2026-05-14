@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>CyberPredict AI — Neon Dashboard</title>
+<title>CyberPredict AI — Pro Dashboard</title>
 <style>
-/* ========== RESET & BASE ========== */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --cyan:#00f0ff;--pink:#ff2d95;--green:#39ff14;--red:#ff3131;
-  --gold:#ffd700;--bg:#0a0a12;--card:rgba(15,15,30,0.65);
-  --glass:rgba(255,255,255,0.04);--border:rgba(0,240,255,0.15);
-  --text:#e0e8ff;--muted:#7a8ba8;--font:'Segoe UI',system-ui,sans-serif;
+  --cyan:#00f0ff;--pink:#ff2d95;--purple:#a855f7;--green:#39ff14;--red:#ff3131;
+  --gold:#ffd700;--bg:#06060e;--card:rgba(12,12,28,0.72);
+  --glass:rgba(255,255,255,0.03);--border:rgba(0,240,255,0.12);
+  --text:#e0e8ff;--muted:#6a7b9a;--font:'Segoe UI',system-ui,sans-serif;
 }
 html{font-size:14px;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font);background:var(--bg);color:var(--text);
@@ -20,329 +19,352 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:4px}
 
-/* ========== CYBER GRID BACKGROUND ========== */
+/* ===== CYBER GRID ===== */
 #cyberGrid{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 #cyberGrid canvas{width:100%;height:100%}
 
-/* ========== LOADING SCREEN ========== */
-#loadingScreen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;background:var(--bg);transition:opacity .6s}
-#loadingScreen.hide{opacity:0;pointer-events:none}
-.loader-logo{font-size:2.4rem;font-weight:900;letter-spacing:4px;
-  background:linear-gradient(90deg,var(--cyan),var(--pink));
+/* ===== FLOATING NEON BLURS ===== */
+.neon-blur{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:.18}
+.neon-blur.nb1{width:300px;height:300px;background:var(--cyan);top:-80px;left:-60px;animation:floatA 12s ease-in-out infinite}
+.neon-blur.nb2{width:250px;height:250px;background:var(--pink);bottom:-50px;right:-40px;animation:floatB 15s ease-in-out infinite}
+.neon-blur.nb3{width:200px;height:200px;background:var(--purple);top:40%;left:60%;animation:floatC 18s ease-in-out infinite}
+@keyframes floatA{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,80px)}}
+@keyframes floatB{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-70px)}}
+@keyframes floatC{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,50px)}}
+
+/* ===== LOADING SCREEN ===== */
+#loadScreen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--bg);transition:opacity .8s}
+#loadScreen.hide{opacity:0;pointer-events:none}
+.ld-logo{font-size:2.2rem;font-weight:900;letter-spacing:5px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  animation:logoPulse 1.5s ease-in-out infinite}
-@keyframes logoPulse{0%,100%{filter:brightness(1);transform:scale(1)}
-  50%{filter:brightness(1.5);transform:scale(1.05)}}
-.loader-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;
-  margin-top:24px;overflow:hidden}
-.loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pink));
-  border-radius:3px;animation:loadBar 2.5s ease forwards}
+  animation:gradShift 3s ease infinite,logoPulse 1.5s ease-in-out infinite}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes logoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.ld-sub{color:var(--muted);font-size:.7rem;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
+.ld-bar{width:220px;height:3px;background:rgba(255,255,255,0.08);border-radius:3px;margin-top:20px;overflow:hidden}
+.ld-bar-in{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));
+  border-radius:3px;animation:loadBar 2.8s ease forwards}
 @keyframes loadBar{to{width:100%}}
-.loader-text{margin-top:12px;color:var(--muted);font-size:.85rem;letter-spacing:2px;
-  animation:blink 1s step-end infinite}
+.ld-txt{margin-top:14px;color:var(--muted);font-size:.75rem;letter-spacing:2px;animation:blink 1s step-end infinite}
 @keyframes blink{50%{opacity:0}}
 
-/* ========== LOGIN SCREEN ========== */
+/* ===== LOGIN ===== */
 #loginScreen{position:fixed;inset:0;z-index:8888;display:flex;align-items:center;
   justify-content:center;background:var(--bg);transition:opacity .5s}
 #loginScreen.hide{opacity:0;pointer-events:none}
-.login-card{background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--border);
-  border-radius:16px;padding:40px 32px;width:90%;max-width:380px;text-align:center;
-  box-shadow:0 0 40px rgba(0,240,255,0.08)}
-.login-card h2{font-size:1.6rem;margin-bottom:6px;
-  background:linear-gradient(90deg,var(--cyan),var(--pink));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.login-card p{color:var(--muted);font-size:.8rem;margin-bottom:24px}
-.login-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);
+.login-card{background:var(--card);backdrop-filter:blur(24px);border:1px solid var(--border);
+  border-radius:18px;padding:36px 28px;width:92%;max-width:380px;text-align:center;
+  box-shadow:0 0 50px rgba(0,240,255,0.06),0 0 100px rgba(168,85,247,0.04)}
+.login-card h2{font-size:1.5rem;margin-bottom:4px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 3s ease infinite}
+.login-card p{color:var(--muted);font-size:.75rem;margin-bottom:20px}
+.login-input{width:100%;padding:13px 16px;background:rgba(255,255,255,0.04);
   border:1px solid var(--border);border-radius:10px;color:var(--text);
-  font-size:1rem;outline:none;transition:border .3s}
-.login-input:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,240,255,0.2)}
-.login-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:10px;
-  font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:1px;
-  background:linear-gradient(135deg,var(--cyan),var(--pink));color:#000;
-  transition:transform .2s,box-shadow .3s;text-transform:uppercase}
-.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(0,240,255,0.4)}
-.login-btn:active{transform:scale(.97)}
-.login-error{color:var(--red);font-size:.8rem;margin-top:10px;min-height:1.2em}
+  font-size:1rem;outline:none;transition:border .3s,box-shadow .3s}
+.login-input:focus{border-color:var(--purple);box-shadow:0 0 16px rgba(168,85,247,0.25)}
+.login-btn{width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;
+  font-size:.95rem;font-weight:700;cursor:pointer;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  color:#000;transition:transform .2s,box-shadow .3s;text-transform:uppercase;animation:gradShift 4s ease infinite}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(168,85,247,0.4)}
+.login-btn:active{transform:scale(.96)}
+.login-error{color:var(--red);font-size:.78rem;margin-top:8px;min-height:1.2em}
 
-/* ========== MAIN DASHBOARD ========== */
+/* ===== DASHBOARD ===== */
 #dashboard{display:none;min-height:100vh;position:relative;z-index:1;
-  padding:12px;max-width:520px;margin:0 auto}
+  padding:10px;max-width:520px;margin:0 auto}
 #dashboard.show{display:block;animation:fadeUp .5s ease}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
-/* ========== HEADER ========== */
-.header{display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;background:var(--card);backdrop-filter:blur(16px);
-  border:1px solid var(--border);border-radius:14px;margin-bottom:12px}
-.header-brand{font-weight:800;font-size:1.15rem;
-  background:linear-gradient(90deg,var(--cyan),var(--pink));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header-right{display:flex;align-items:center;gap:12px}
-.ping-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
-  box-shadow:0 0 8px var(--green);animation:pingPulse 2s infinite}
-@keyframes pingPulse{0%,100%{opacity:1}50%{opacity:.4}}
-.ping-text{font-size:.7rem;color:var(--muted)}
-.sound-btn{background:none;border:1px solid var(--border);border-radius:8px;
-  padding:4px 8px;color:var(--cyan);cursor:pointer;font-size:.85rem;transition:all .3s}
-.sound-btn:hover{background:rgba(0,240,255,0.1)}
-.logout-btn{background:none;border:1px solid rgba(255,45,149,0.3);border-radius:8px;
-  padding:4px 10px;color:var(--pink);cursor:pointer;font-size:.75rem;transition:all .3s}
-.logout-btn:hover{background:rgba(255,45,149,0.1)}
+/* ===== HEADER ===== */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+.hdr-brand{font-weight:800;font-size:1.05rem;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 4s ease infinite}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.ping-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pingP 2s infinite}
+@keyframes pingP{0%,100%{opacity:1}50%{opacity:.35}}
+.ping-txt{font-size:.65rem;color:var(--muted)}
+.snd-btn{background:none;border:1px solid var(--border);border-radius:7px;
+  padding:3px 7px;color:var(--cyan);cursor:pointer;font-size:.8rem;transition:all .3s}
+.snd-btn:hover{background:rgba(0,240,255,0.08)}
+.exit-btn{background:none;border:1px solid rgba(255,45,149,0.25);border-radius:7px;
+  padding:3px 9px;color:var(--pink);cursor:pointer;font-size:.7rem;transition:all .3s}
+.exit-btn:hover{background:rgba(255,45,149,0.08)}
 
-/* ========== GLASS CARD ========== */
-.g-card{background:var(--card);backdrop-filter:blur(16px);
-  border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;
-  transition:border-color .3s}
-.g-card:hover{border-color:rgba(0,240,255,0.3)}
-.card-title{font-size:.75rem;text-transform:uppercase;letter-spacing:2px;
-  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.card-title::before{content:'';width:3px;height:12px;background:var(--cyan);border-radius:2px}
+/* ===== GLASS CARD ===== */
+.gc{background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;
+  transition:border-color .3s,box-shadow .3s}
+.gc:hover{border-color:rgba(168,85,247,0.25);box-shadow:0 0 20px rgba(168,85,247,0.05)}
+.ct{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ct::before{content:'';width:3px;height:11px;border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--purple))}
 
-/* ========== TIMER SECTION ========== */
-.timer-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* ===== TIMER ===== */
+.timer-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .period-info{flex:1;min-width:0}
-.period-label{font-size:.7rem;color:var(--muted)}
-.period-num{font-size:1.1rem;font-weight:800;color:var(--cyan);
-  text-shadow:0 0 10px rgba(0,240,255,0.4);word-break:break-all}
-.timer-display{display:flex;align-items:center;gap:4px}
-.timer-digit{background:linear-gradient(135deg,rgba(0,240,255,0.12),rgba(255,45,149,0.08));
-  border:1px solid var(--border);border-radius:8px;padding:8px 10px;
-  font-size:1.4rem;font-weight:900;color:var(--cyan);min-width:36px;text-align:center;
-  text-shadow:0 0 12px rgba(0,240,255,0.5)}
-.timer-sep{font-size:1.4rem;color:var(--pink);animation:blink 1s step-end infinite}
-.timer-bar{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;
-  margin-top:10px;overflow:hidden}
+.period-lbl{font-size:.65rem;color:var(--muted)}
+.period-num{font-size:1rem;font-weight:800;color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,240,255,0.35);word-break:break-all}
+.next-period{font-size:.75rem;color:var(--purple);margin-top:2px;font-weight:600}
+.timer-dsp{display:flex;align-items:center;gap:3px}
+.t-dig{background:linear-gradient(135deg,rgba(0,240,255,0.1),rgba(168,85,247,0.08));
+  border:1px solid var(--border);border-radius:7px;padding:7px 9px;
+  font-size:1.3rem;font-weight:900;color:var(--cyan);min-width:32px;text-align:center;
+  text-shadow:0 0 10px rgba(0,240,255,0.4)}
+.t-sep{font-size:1.3rem;color:var(--pink);animation:blink 1s step-end infinite}
+.timer-bar{width:100%;height:3px;background:rgba(255,255,255,0.05);border-radius:3px;margin-top:8px;overflow:hidden}
 .timer-bar-fill{height:100%;border-radius:3px;transition:width 1s linear;
-  background:linear-gradient(90deg,var(--cyan),var(--pink))}
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink))}
 
-/* ========== PREDICTION PANEL ========== */
-.pred-result{text-align:center;padding:20px 0 10px}
-.pred-label{font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-.pred-value{font-size:2.8rem;font-weight:900;margin:6px 0;letter-spacing:4px;
-  text-shadow:0 0 30px currentColor;transition:color .3s}
-.pred-value.big{color:var(--pink)}
-.pred-value.small{color:var(--cyan)}
-.pred-confidence{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
-.conf-bar{width:120px;height:6px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden}
-.conf-fill{height:100%;border-radius:6px;transition:width .6s ease;
-  background:linear-gradient(90deg,var(--cyan),var(--pink))}
-.conf-text{font-size:.85rem;font-weight:700;color:var(--gold)}
+/* ===== AI THINKING ===== */
+.ai-thinking{text-align:center;padding:16px 0 8px}
+.ai-think-txt{font-size:1rem;font-weight:700;letter-spacing:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:gradShift 2s ease infinite,pulseScale 1.2s ease-in-out infinite}
+@keyframes pulseScale{0%,100%{opacity:.6;transform:scale(.97)}50%{opacity:1;transform:scale(1.02)}}
+.ai-dots{display:inline-block}
+.ai-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--purple);margin:0 2px;animation:dotBounce 1.4s ease-in-out infinite}
+.ai-dots span:nth-child(2){animation-delay:.2s}
+.ai-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 
-/* ========== CIRCULAR NUMBER INDICATORS ========== */
-.num-indicators{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0}
-.num-circle{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-weight:800;font-size:.95rem;border:2px solid var(--border);
-  transition:all .4s;cursor:default;position:relative}
-.num-circle.big-num{border-color:var(--pink);color:var(--pink);
-  box-shadow:0 0 10px rgba(255,45,149,0.25)}
-.num-circle.small-num{border-color:var(--cyan);color:var(--cyan);
-  box-shadow:0 0 10px rgba(0,240,255,0.25)}
-.num-circle.active{transform:scale(1.2);
-  background:linear-gradient(135deg,rgba(0,240,255,0.2),rgba(255,45,149,0.2))}
+/* ===== PREDICTION ===== */
+.pred-result{text-align:center;padding:14px 0 8px}
+.pred-lbl{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.pred-val{font-size:2.6rem;font-weight:900;margin:4px 0;letter-spacing:4px;
+  text-shadow:0 0 30px currentColor;transition:color .4s,text-shadow .4s}
+.pred-val.big{color:var(--pink)}
+.pred-val.small{color:var(--cyan)}
+.pred-conf{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.conf-bar{width:130px;height:6px;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden}
+.conf-fill{height:100%;border-radius:6px;transition:width .5s ease;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink))}
+.conf-txt{font-size:.85rem;font-weight:700;color:var(--gold)}
+.ai-mode-tag{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:6px;
+  font-size:.65rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  border:1px solid var(--border);background:var(--glass)}
+.ai-mode-tag.streak{color:var(--pink);border-color:rgba(255,45,149,0.3)}
+.ai-mode-tag.reversal{color:var(--cyan);border-color:rgba(0,240,255,0.3)}
+.ai-mode-tag.weighted{color:var(--purple);border-color:rgba(168,85,247,0.3)}
+.ai-mode-tag.trend{color:var(--green);border-color:rgba(57,255,20,0.3)}
 
-/* ========== TREND SECTION ========== */
-.trend-dots{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
-.trend-dot{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;
-  justify-content:center;font-size:.6rem;font-weight:700;transition:all .3s}
-.trend-dot.b{background:rgba(255,45,149,0.2);color:var(--pink);border:1px solid rgba(255,45,149,0.3)}
-.trend-dot.s{background:rgba(0,240,255,0.15);color:var(--cyan);border:1px solid rgba(0,240,255,0.3)}
-.trend-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
-.trend-stat{text-align:center;padding:8px;background:var(--glass);border-radius:10px;
-  border:1px solid var(--border)}
-.trend-stat-val{font-size:1.1rem;font-weight:800}
-.trend-stat-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+/* ===== SUGGESTED NUMBERS ===== */
+.sugg-nums{display:flex;justify-content:center;gap:6px;margin:10px 0;flex-wrap:wrap}
+.sugg-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:.85rem;transition:all .4s;position:relative}
+.sugg-num.big-n{border:2px solid var(--pink);color:var(--pink);box-shadow:0 0 8px rgba(255,45,149,0.2)}
+.sugg-num.small-n{border:2px solid var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(0,240,255,0.2)}
+.sugg-num.active{transform:scale(1.22);
+  background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(0,240,255,0.15));
+  box-shadow:0 0 16px rgba(168,85,247,0.35)}
+.sugg-num.suggested{border-width:2px;animation:sugPulse 1.5s ease-in-out infinite}
+@keyframes sugPulse{0%,100%{box-shadow:0 0 8px rgba(168,85,247,0.2)}50%{box-shadow:0 0 18px rgba(168,85,247,0.5)}}
 
-/* ========== MODE BUTTONS ========== */
-.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.mode-btn{padding:10px;border-radius:10px;border:1px solid var(--border);
-  background:var(--glass);color:var(--text);font-size:.8rem;font-weight:600;
-  cursor:pointer;transition:all .3s;text-align:center;letter-spacing:.5px}
-.mode-btn:hover{border-color:var(--cyan);background:rgba(0,240,255,0.08)}
-.mode-btn.active{border-color:var(--cyan);background:rgba(0,240,255,0.12);
-  color:var(--cyan);box-shadow:0 0 15px rgba(0,240,255,0.15)}
-
-/* ========== MARTINGALE ========== */
-.mart-row{display:flex;align-items:center;gap:10px}
-.mart-level{font-size:2rem;font-weight:900;color:var(--gold);
-  text-shadow:0 0 15px rgba(255,215,0,0.4)}
-.mart-info{flex:1}
-.mart-info-text{font-size:.75rem;color:var(--muted)}
-.mart-streak{font-weight:700}
-.mart-reset-btn{padding:8px 16px;border-radius:8px;border:1px solid rgba(255,215,0,0.3);
-  background:rgba(255,215,0,0.08);color:var(--gold);font-size:.75rem;
-  cursor:pointer;transition:all .3s;font-weight:600}
-.mart-reset-btn:hover{background:rgba(255,215,0,0.15);border-color:var(--gold)}
-
-/* ========== HISTORY TABLE ========== */
-.hist-table{width:100%;border-collapse:collapse}
-.hist-table th{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;
-  color:var(--muted);padding:8px 6px;text-align:left;border-bottom:1px solid var(--border)}
-.hist-table td{padding:8px 6px;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,0.03)}
-.hist-table tr{transition:background .2s}
-.hist-table tr:hover td{background:rgba(0,240,255,0.03)}
-.badge{display:inline-block;padding:2px 10px;border-radius:6px;font-size:.7rem;font-weight:700}
-.badge.big{background:rgba(255,45,149,0.15);color:var(--pink)}
-.badge.small{background:rgba(0,240,255,0.12);color:var(--cyan)}
-.badge.win{background:rgba(57,255,20,0.15);color:var(--green)}
-.badge.loss{background:rgba(255,49,49,0.15);color:var(--red)}
-
-/* ========== ACTION BUTTONS ========== */
-.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.glow-btn{padding:12px;border:none;border-radius:10px;font-size:.85rem;font-weight:700;
-  cursor:pointer;letter-spacing:1px;transition:all .3s;text-transform:uppercase}
+/* ===== ACTION BTNS ===== */
+.act-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.glow-btn{padding:11px;border:none;border-radius:10px;font-size:.82rem;font-weight:700;
+  cursor:pointer;letter-spacing:1px;transition:all .3s;text-transform:uppercase;position:relative;overflow:hidden}
+.glow-btn::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent)}
+.glow-btn:hover::after{opacity:1}
 .glow-btn:active{transform:scale(.95)}
 .glow-btn.primary{background:linear-gradient(135deg,var(--cyan),#0088aa);color:#000;
-  box-shadow:0 0 20px rgba(0,240,255,0.2)}
-.glow-btn.primary:hover{box-shadow:0 0 30px rgba(0,240,255,0.4);transform:translateY(-1px)}
+  box-shadow:0 0 16px rgba(0,240,255,0.2)}
+.glow-btn.primary:hover{box-shadow:0 0 28px rgba(0,240,255,0.4)}
 .glow-btn.danger{background:linear-gradient(135deg,var(--pink),#aa0044);color:#fff;
-  box-shadow:0 0 20px rgba(255,45,149,0.2)}
-.glow-btn.danger:hover{box-shadow:0 0 30px rgba(255,45,149,0.4);transform:translateY(-1px)}
-.glow-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;
-  box-shadow:none!important}
+  box-shadow:0 0 16px rgba(255,45,149,0.2)}
+.glow-btn.danger:hover{box-shadow:0 0 28px rgba(255,45,149,0.4)}
 
-/* ========== STATUS BAR ========== */
-.status-bar{display:flex;align-items:center;justify-content:center;gap:8px;
-  padding:10px;text-align:center;font-size:.7rem;color:var(--muted)}
-.status-dot{width:6px;height:6px;border-radius:50%}
-.status-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
-.status-dot.offline{background:var(--red);box-shadow:0 0 6px var(--red)}
+/* ===== TREND ===== */
+.trend-dots{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}
+.trend-dot{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:.55rem;font-weight:700;transition:all .3s}
+.trend-dot.b{background:rgba(255,45,149,0.18);color:var(--pink);border:1px solid rgba(255,45,149,0.25)}
+.trend-dot.s{background:rgba(0,240,255,0.12);color:var(--cyan);border:1px solid rgba(0,240,255,0.25)}
+.trend-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.trend-stat{text-align:center;padding:7px;background:var(--glass);border-radius:9px;border:1px solid var(--border)}
+.trend-stat-v{font-size:1rem;font-weight:800}
+.trend-stat-l{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 
-/* ========== TOAST ========== */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
-  padding:12px 24px;border-radius:10px;font-size:.85rem;font-weight:600;z-index:9000;
+/* ===== MODE BTNS ===== */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.mode-btn{padding:9px;border-radius:9px;border:1px solid var(--border);
+  background:var(--glass);color:var(--text);font-size:.75rem;font-weight:600;
+  cursor:pointer;transition:all .3s;text-align:center}
+.mode-btn:hover{border-color:var(--purple);background:rgba(168,85,247,0.06)}
+.mode-btn.active{border-color:var(--purple);background:rgba(168,85,247,0.1);
+  color:var(--purple);box-shadow:0 0 12px rgba(168,85,247,0.12)}
+
+/* ===== MARTINGALE ===== */
+.mart-row{display:flex;align-items:center;gap:10px}
+.mart-lvl{font-size:1.8rem;font-weight:900;text-shadow:0 0 12px currentColor}
+.mart-info{flex:1}
+.mart-info-txt{font-size:.7rem;color:var(--muted)}
+.mart-str{font-weight:700}
+.mart-rst{padding:7px 14px;border-radius:8px;border:1px solid rgba(255,215,0,0.25);
+  background:rgba(255,215,0,0.06);color:var(--gold);font-size:.7rem;
+  cursor:pointer;transition:all .3s;font-weight:600}
+.mart-rst:hover{background:rgba(255,215,0,0.12);border-color:var(--gold)}
+
+/* ===== HISTORY ===== */
+.hist-wrap{max-height:280px;overflow-y:auto;scroll-behavior:smooth}
+.hist-tbl{width:100%;border-collapse:collapse}
+.hist-tbl th{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(12,12,28,0.95)}
+.hist-tbl td{padding:6px 4px;font-size:.75rem;border-bottom:1px solid rgba(255,255,255,0.02)}
+.hist-tbl tr{transition:background .2s}
+.hist-tbl tr:hover td{background:rgba(168,85,247,0.03)}
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:.65rem;font-weight:700}
+.badge.big{background:rgba(255,45,149,0.12);color:var(--pink)}
+.badge.small{background:rgba(0,240,255,0.1);color:var(--cyan)}
+.badge.win{background:rgba(57,255,20,0.12);color:var(--green)}
+.badge.loss{background:rgba(255,49,49,0.12);color:var(--red)}
+
+/* ===== WIN RATE ===== */
+.wr-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px}
+.wr-item{text-align:center}
+.wr-val{font-size:1.1rem;font-weight:800}
+.wr-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ===== ERROR ===== */
+.err-ban{background:rgba(255,49,49,0.08);border:1px solid rgba(255,49,49,0.25);
+  border-radius:9px;padding:8px 12px;margin-bottom:8px;font-size:.75rem;color:var(--red);
+  display:none;align-items:center;gap:6px}
+.err-ban.show{display:flex}
+
+/* ===== STATUS ===== */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px;text-align:center;font-size:.65rem;color:var(--muted)}
+.status-dot{width:5px;height:5px;border-radius:50%}
+.status-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+
+/* ===== TOAST ===== */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);
+  padding:10px 20px;border-radius:10px;font-size:.8rem;font-weight:600;z-index:9000;
   backdrop-filter:blur(16px);border:1px solid var(--border);background:var(--card);
-  transition:transform .4s ease,opacity .4s;opacity:0;pointer-events:none;
+  transition:transform .35s ease,opacity .35s;opacity:0;pointer-events:none;
   white-space:nowrap;max-width:90%}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
-/* ========== ERROR OVERLAY ========== */
-.error-banner{background:rgba(255,49,49,0.1);border:1px solid rgba(255,49,49,0.3);
-  border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:var(--red);
-  display:none;align-items:center;gap:8px}
-.error-banner.show{display:flex}
-
-/* ========== RESPONSIVE ========== */
-@media(max-width:400px){
-  .pred-value{font-size:2.2rem}
-  .timer-digit{font-size:1.1rem;padding:6px 8px;min-width:30px}
-  .num-circle{width:32px;height:32px;font-size:.8rem}
-  .trend-dot{width:18px;height:18px;font-size:.55rem}
-  .g-card{padding:12px}
+/* ===== RESPONSIVE ===== */
+@media(max-width:380px){
+  .pred-val{font-size:2rem}
+  .t-dig{font-size:1rem;padding:5px 7px;min-width:28px}
+  .sugg-num{width:28px;height:28px;font-size:.7rem}
+  .trend-dot{width:16px;height:16px;font-size:.5rem}
+  .gc{padding:10px}
 }
-@media(min-width:521px){
-  #dashboard{padding:20px}
-  .g-card{padding:20px}
-}
+@media(min-width:521px){#dashboard{padding:16px}.gc{padding:18px}}
 </style>
 </head>
 <body>
 
-<!-- ========== CYBER GRID BACKGROUND ========== -->
 <div id="cyberGrid"><canvas id="gridCanvas"></canvas></div>
+<div class="neon-blur nb1"></div>
+<div class="neon-blur nb2"></div>
+<div class="neon-blur nb3"></div>
 
-<!-- ========== LOADING SCREEN ========== -->
-<div id="loadingScreen">
-  <div class="loader-logo">CYBERPREDICT</div>
-  <div class="loader-bar"><div class="loader-bar-inner"></div></div>
-  <div class="loader-text">INITIALIZING AI ENGINE...</div>
+<!-- LOADING -->
+<div id="loadScreen">
+  <div class="ld-logo">CYBERPREDICT</div>
+  <div class="ld-sub">Advanced AI Engine v2.0</div>
+  <div class="ld-bar"><div class="ld-bar-in"></div></div>
+  <div class="ld-txt">INITIALIZING NEURAL NETWORK...</div>
 </div>
 
-<!-- ========== LOGIN SCREEN ========== -->
+<!-- LOGIN -->
 <div id="loginScreen" style="display:none">
   <div class="login-card">
-    <h2>⟨ ACCESS PANEL ⟩</h2>
-    <p>Enter credentials to access the prediction engine</p>
+    <h2>ACCESS TERMINAL</h2>
+    <p>Enter authorization code to access prediction engine</p>
     <input class="login-input" id="loginPass" type="password" placeholder="Enter access code..." autocomplete="off"/>
     <button class="login-btn" id="loginBtn" onclick="handleLogin()">AUTHENTICATE</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
 
-<!-- ========== TOAST ========== -->
 <div id="toast"></div>
 
-<!-- ========== MAIN DASHBOARD ========== -->
+<!-- DASHBOARD -->
 <div id="dashboard">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-brand">CYBERPREDICT AI</div>
-    <div class="header-right">
-      <div style="display:flex;align-items:center;gap:4px">
+  <div class="hdr">
+    <div class="hdr-brand">CYBERPREDICT AI</div>
+    <div class="hdr-right">
+      <div style="display:flex;align-items:center;gap:3px">
         <div class="ping-dot" id="pingDot"></div>
-        <span class="ping-text" id="pingText">--ms</span>
+        <span class="ping-txt" id="pingTxt">--ms</span>
       </div>
-      <button class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
-      <button class="logout-btn" onclick="handleLogout()">EXIT</button>
+      <button class="snd-btn" id="sndBtn" onclick="toggleSound()" title="Sound">🔊</button>
+      <button class="exit-btn" onclick="handleLogout()">EXIT</button>
     </div>
   </div>
 
-  <!-- ERROR BANNER -->
-  <div class="error-banner" id="errorBanner">
-    <span>⚠</span><span id="errorText">API connection error</span>
-  </div>
+  <div class="err-ban" id="errBan"><span>⚠</span><span id="errTxt">API error</span></div>
 
   <!-- TIMER -->
-  <div class="g-card">
-    <div class="card-title">Current Period</div>
+  <div class="gc">
+    <div class="ct">Period Tracker</div>
     <div class="timer-row">
       <div class="period-info">
-        <div class="period-label">PERIOD ID</div>
-        <div class="period-num" id="periodNum">----</div>
+        <div class="period-lbl">CURRENT PERIOD</div>
+        <div class="period-num" id="curPeriod">----</div>
+        <div class="next-period">NEXT: <span id="nextPeriod">----</span></div>
       </div>
-      <div class="timer-display">
-        <div class="timer-digit" id="timerMin">0</div>
-        <div class="timer-sep">:</div>
-        <div class="timer-digit" id="timerSec1">0</div>
-        <div class="timer-digit" id="timerSec2">0</div>
+      <div class="timer-dsp">
+        <div class="t-dig" id="tMin">0</div>
+        <div class="t-sep">:</div>
+        <div class="t-dig" id="tS1">0</div>
+        <div class="t-dig" id="tS2">0</div>
       </div>
     </div>
-    <div class="timer-bar"><div class="timer-bar-fill" id="timerBarFill"></div></div>
+    <div class="timer-bar"><div class="timer-bar-fill" id="tBarFill"></div></div>
   </div>
 
-  <!-- PREDICTION PANEL -->
-  <div class="g-card">
-    <div class="card-title">AI Prediction</div>
-    <div class="pred-result">
-      <div class="pred-label">NEXT PERIOD RESULT</div>
-      <div class="pred-value" id="predValue">---</div>
-      <div class="pred-confidence">
-        <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
-        <span class="conf-text" id="confText">--%</span>
-      </div>
+  <!-- PREDICTION -->
+  <div class="gc" id="predCard">
+    <div class="ct">AI Prediction</div>
+    <div id="aiThinking" class="ai-thinking" style="display:none">
+      <div class="ai-think-txt">AI THINKING <div class="ai-dots"><span></span><span></span><span></span></div></div>
     </div>
-
-    <!-- NUMBER INDICATORS -->
-    <div class="num-indicators" id="numIndicators"></div>
-
-    <!-- ACTION BUTTONS -->
-    <div class="action-row">
-      <button class="glow-btn primary" id="btnBig" onclick="manualPick('BIG')">BIG (5-9)</button>
-      <button class="glow-btn danger" id="btnSmall" onclick="manualPick('SMALL')">SMALL (0-4)</button>
+    <div id="predContent">
+      <div class="pred-result">
+        <div class="pred-lbl">NEXT PERIOD RESULT</div>
+        <div class="pred-val" id="predVal">---</div>
+        <div class="pred-conf">
+          <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+          <span class="conf-txt" id="confTxt">--%</span>
+        </div>
+        <div id="aiModeTag" class="ai-mode-tag" style="display:none"></div>
+      </div>
+      <div class="sugg-nums" id="suggNums"></div>
+      <div class="act-row">
+        <button class="glow-btn primary" onclick="manualPick('BIG')">BIG (5-9)</button>
+        <button class="glow-btn danger" onclick="manualPick('SMALL')">SMALL (0-4)</button>
+      </div>
     </div>
   </div>
 
-  <!-- TREND ANALYSIS -->
-  <div class="g-card">
-    <div class="card-title">Trend Analysis</div>
+  <!-- TREND -->
+  <div class="gc">
+    <div class="ct">Trend Analysis</div>
     <div class="trend-dots" id="trendDots"></div>
     <div class="trend-stats">
-      <div class="trend-stat">
-        <div class="trend-stat-val" id="statBig" style="color:var(--pink)">0</div>
-        <div class="trend-stat-label">Big</div>
-      </div>
-      <div class="trend-stat">
-        <div class="trend-stat-val" id="statSmall" style="color:var(--cyan)">0</div>
-        <div class="trend-stat-label">Small</div>
-      </div>
-      <div class="trend-stat">
-        <div class="trend-stat-val" id="statStreak" style="color:var(--gold)">0</div>
-        <div class="trend-stat-label">Streak</div>
-      </div>
+      <div class="trend-stat"><div class="trend-stat-v" id="stBig" style="color:var(--pink)">0</div><div class="trend-stat-l">Big</div></div>
+      <div class="trend-stat"><div class="trend-stat-v" id="stSmall" style="color:var(--cyan)">0</div><div class="trend-stat-l">Small</div></div>
+      <div class="trend-stat"><div class="trend-stat-v" id="stStreak" style="color:var(--gold)">0</div><div class="trend-stat-l">Streak</div></div>
     </div>
-    <!-- MODES -->
     <div class="mode-row">
       <button class="mode-btn active" id="modeFollow" onclick="setMode('follow')">📈 Trend Follow</button>
       <button class="mode-btn" id="modeReverse" onclick="setMode('reverse')">🔄 Smart Reverse</button>
@@ -350,755 +372,585 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);
   </div>
 
   <!-- MARTINGALE -->
-  <div class="g-card">
-    <div class="card-title">Martingale Tracker</div>
+  <div class="gc">
+    <div class="ct">Martingale Tracker</div>
     <div class="mart-row">
-      <div class="mart-level" id="martLevel">M0</div>
+      <div class="mart-lvl" id="martLvl">M0</div>
       <div class="mart-info">
-        <div class="mart-info-text">Current Loss Streak: <span class="mart-streak" id="martStreak">0</span></div>
-        <div class="mart-info-text">Suggested Multiplier: <span class="mart-streak" id="martMulti">1x</span></div>
+        <div class="mart-info-txt">Loss Streak: <span class="mart-str" id="martStr">0</span></div>
+        <div class="mart-info-txt">Multiplier: <span class="mart-str" id="martMul">1x</span></div>
       </div>
-      <button class="mart-reset-btn" onclick="resetMartingale()">RESET</button>
+      <button class="mart-rst" onclick="resetMart()">RESET</button>
     </div>
   </div>
 
-  <!-- HISTORY TABLE -->
-  <div class="g-card">
-    <div class="card-title">Live History</div>
-    <div style="overflow-x:auto">
-      <table class="hist-table">
-        <thead><tr>
-          <th>Period</th><th>Number</th><th>Result</th><th>Prediction</th><th>Status</th>
-        </tr></thead>
+  <!-- HISTORY -->
+  <div class="gc">
+    <div class="ct">Live History</div>
+    <div class="wr-row">
+      <div class="wr-item"><div class="wr-val" id="wrWins" style="color:var(--green)">0</div><div class="wr-lbl">Wins</div></div>
+      <div class="wr-item"><div class="wr-val" id="wrLoss" style="color:var(--red)">0</div><div class="wr-lbl">Losses</div></div>
+      <div class="wr-item"><div class="wr-val" id="wrRate" style="color:var(--gold)">0%</div><div class="wr-lbl">Win Rate</div></div>
+    </div>
+    <div class="hist-wrap" id="histWrap">
+      <table class="hist-tbl">
+        <thead><tr><th>Period</th><th>Num</th><th>Result</th><th>Pred</th><th>Status</th></tr></thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- STATUS BAR -->
   <div class="status-bar">
-    <div class="status-dot" id="statusDot"></div>
-    <span id="statusText">Connecting to prediction engine...</span>
+    <div class="status-dot" id="sDot"></div>
+    <span id="sTxt">Connecting...</span>
   </div>
 </div>
 
 <script>
 /* =================================================================
-   CYBERPREDICT AI — COMPLETE PREDICTION DASHBOARD ENGINE
+   CYBERPREDICT AI v2.0 — ADVANCED WINGO PREDICTION ENGINE
    ================================================================= */
 
-// ---- CONFIG ----
-const CONFIG = {
-  API_BASE: 'https://sit-webapi.mggametransit.com',
-  TENANT_ID: 6004,
-  PASSWORD: 'rana1234',
-  TIMER_DURATION: 60,
-  HISTORY_LIMIT: 20,
-  TREND_WINDOW: 30,
-  FETCH_INTERVAL: 5000,
-  PING_INTERVAL: 10000
+const CFG = {
+  API: 'https://sit-webapi.mggametransit.com',
+  TENANT: 6004,
+  PASS: '786786',
+  DURATION: 60,
+  HIST_LIMIT: 30,
+  TREND_WIN: 30,
+  FETCH_INT: 4000,
+  PING_INT: 12000
 };
 
-// ---- STATE ----
-const STATE = {
-  loggedIn: false,
-  soundOn: true,
-  mode: 'follow',         // 'follow' | 'reverse'
-  timer: CONFIG.TIMER_DURATION,
-  currentPeriod: '',
-  lastResult: null,
-  prediction: null,
-  confidence: 0,
-  history: [],
-  trendData: [],
-  martingale: { level: 0, streak: 0 },
-  isOnline: true,
-  fetchErrors: 0,
-  timerInterval: null,
-  fetchInterval: null,
-  pingInterval: null,
-  predictionHistory: [],
-  apiAvailable: false
+const S = {
+  loggedIn: false, soundOn: true, mode: 'follow',
+  timer: CFG.DURATION, curPeriod: '', nextPeriod: '',
+  lastResult: null, prediction: null, confidence: 0,
+  predictedNumber: null, aiMode: '', isThinking: false,
+  history: [], trendData: [], predHistory: [],
+  mart: { level: 0, streak: 0 },
+  wins: 0, losses: 0,
+  online: true, fetchErr: 0, apiOk: false,
+  timerInt: null, fetchInt: null, pingInt: null,
+  lastPeriodProcessed: '', suggestedNums: []
 };
 
-// ---- AUDIO (Web Audio API - no external files) ----
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-
-function ensureAudio() {
-  if (!audioCtx) audioCtx = new AudioCtx();
-}
-
-function playTone(freq, duration, type = 'sine', vol = 0.15) {
-  if (!STATE.soundOn) return;
-  try {
-    ensureAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+/* ===== AUDIO ===== */
+const ACtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+function ensureA() { if (!actx) actx = new ACtx(); }
+function tone(f, d, t = 'sine', v = 0.12) {
+  if (!S.soundOn) return;
+  try { ensureA(); const o = actx.createOscillator(), g = actx.createGain();
+    o.type = t; o.frequency.value = f; g.gain.setValueAtTime(v, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + d);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + d);
   } catch (e) {}
 }
+function sfxTick() { tone(900, 0.04, 'square', 0.04); }
+function sfxPred() { tone(1200, 0.12); setTimeout(() => tone(1500, 0.15), 80); }
+function sfxWin() { tone(880, 0.08); setTimeout(() => tone(1100, 0.08), 80); setTimeout(() => tone(1400, 0.15), 160); }
+function sfxLoss() { tone(300, 0.25, 'sawtooth', 0.08); }
+function sfxAlert() { tone(600, 0.08, 'triangle'); setTimeout(() => tone(600, 0.08, 'triangle'), 120); }
 
-function sfxTick() { playTone(800, 0.05, 'square', 0.05); }
-function sfxPredict() { playTone(1200, 0.15, 'sine'); playTone(1600, 0.15, 'sine'); }
-function sfxWin() { playTone(880, 0.1); setTimeout(() => playTone(1100, 0.1), 100); setTimeout(() => playTone(1400, 0.2), 200); }
-function sfxLoss() { playTone(300, 0.3, 'sawtooth', 0.1); }
-function sfxAlert() { playTone(600, 0.1, 'triangle'); setTimeout(() => playTone(600, 0.1, 'triangle'), 150); }
-
-// ---- CYBER GRID ----
+/* ===== GRID ===== */
 function initGrid() {
-  const canvas = document.getElementById('gridCanvas');
-  const ctx = canvas.getContext('2d');
-  let w, h;
-  function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const cols = 30;
-  const rows = 20;
-  let offset = 0;
-
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-    const cw = w / cols;
-    const rh = h / rows;
-    offset += 0.3;
-
-    // Horizontal lines
+  const c = document.getElementById('gridCanvas'), x = c.getContext('2d');
+  let w, h; function rs() { w = c.width = innerWidth; h = c.height = innerHeight; }
+  rs(); addEventListener('resize', rs);
+  const cols = 35, rows = 22; let off = 0;
+  (function draw() {
+    x.clearRect(0, 0, w, h);
+    const cw = w / cols, rh = h / rows; off += 0.25;
     for (let i = 0; i <= rows; i++) {
-      const y = i * rh + (offset % rh);
-      const alpha = 0.03 + 0.02 * Math.sin(i * 0.5 + offset * 0.02);
-      ctx.strokeStyle = `rgba(0,240,255,${alpha})`;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
+      const y = i * rh + (off % rh);
+      x.strokeStyle = `rgba(0,240,255,${0.025 + 0.015 * Math.sin(i * 0.4 + off * 0.015)})`;
+      x.lineWidth = 0.5; x.beginPath(); x.moveTo(0, y); x.lineTo(w, y); x.stroke();
     }
-    // Vertical lines
     for (let i = 0; i <= cols; i++) {
-      const x = i * cw;
-      const alpha = 0.03 + 0.015 * Math.sin(i * 0.3 + offset * 0.015);
-      ctx.strokeStyle = `rgba(0,240,255,${alpha})`;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
+      x.strokeStyle = `rgba(168,85,247,${0.02 + 0.01 * Math.sin(i * 0.3 + off * 0.01)})`;
+      x.lineWidth = 0.5; x.beginPath(); x.moveTo(i * cw, 0); x.lineTo(i * cw, h); x.stroke();
     }
-
-    // Glow points at intersections
-    for (let i = 0; i <= cols; i += 5) {
-      for (let j = 0; j <= rows; j += 5) {
-        const x = i * cw;
-        const y = j * rh + (offset % rh);
-        const pulse = 0.15 + 0.1 * Math.sin(offset * 0.03 + i + j);
-        ctx.fillStyle = `rgba(0,240,255,${pulse})`;
-        ctx.beginPath();
-        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    for (let i = 0; i <= cols; i += 5) for (let j = 0; j <= rows; j += 5) {
+      const px = i * cw, py = j * rh + (off % rh);
+      x.fillStyle = `rgba(168,85,247,${0.12 + 0.08 * Math.sin(off * 0.025 + i + j)})`;
+      x.beginPath(); x.arc(px, py, 1.5, 0, Math.PI * 2); x.fill();
     }
     requestAnimationFrame(draw);
-  }
-  draw();
+  })();
 }
 
-// ---- TOAST ----
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+/* ===== TOAST ===== */
+function toast(m, d = 2200) {
+  const t = document.getElementById('toast'); t.textContent = m;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), d);
 }
 
-// ---- LOADING / LOGIN ----
+/* ===== LOAD / LOGIN ===== */
 function initApp() {
   initGrid();
   setTimeout(() => {
-    document.getElementById('loadingScreen').classList.add('hide');
+    document.getElementById('loadScreen').classList.add('hide');
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('loginPass').focus();
-  }, 2800);
+  }, 3000);
 }
-
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') handleLogin();
 });
-
 function handleLogin() {
-  const pass = document.getElementById('loginPass').value.trim();
-  if (!pass) {
-    document.getElementById('loginError').textContent = 'Please enter access code';
-    return;
-  }
-  if (pass !== CONFIG.PASSWORD) {
-    document.getElementById('loginError').textContent = 'ACCESS DENIED — Invalid code';
-    sfxAlert();
-    return;
-  }
-  STATE.loggedIn = true;
+  const p = document.getElementById('loginPass').value.trim();
+  if (!p) { document.getElementById('loginError').textContent = 'Please enter access code'; return; }
+  if (p !== CFG.PASS) { document.getElementById('loginError').textContent = 'ACCESS DENIED — Invalid code'; sfxAlert(); return; }
+  S.loggedIn = true;
   document.getElementById('loginScreen').classList.add('hide');
   document.getElementById('dashboard').classList.add('show');
-  sfxPredict();
-  showToast('ACCESS GRANTED — Engine Online');
+  sfxPred(); toast('ACCESS GRANTED — Neural Engine Online');
   startEngine();
 }
-
 function handleLogout() {
-  STATE.loggedIn = false;
-  clearInterval(STATE.timerInterval);
-  clearInterval(STATE.fetchInterval);
-  clearInterval(STATE.pingInterval);
+  S.loggedIn = false;
+  clearInterval(S.timerInt); clearInterval(S.fetchInt); clearInterval(S.pingInt);
   document.getElementById('dashboard').classList.remove('show');
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('loginScreen').classList.remove('hide');
   document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('loginPass').value = '';
-  showToast('Session terminated');
+  document.getElementById('loginPass').value = ''; toast('Session terminated');
 }
-
-// ---- SOUND TOGGLE ----
 function toggleSound() {
-  STATE.soundOn = !STATE.soundOn;
-  document.getElementById('soundBtn').textContent = STATE.soundOn ? '🔊' : '🔇';
-  showToast(STATE.soundOn ? 'Sound ON' : 'Sound OFF');
+  S.soundOn = !S.soundOn;
+  document.getElementById('sndBtn').textContent = S.soundOn ? '🔊' : '🔇';
+  toast(S.soundOn ? 'Sound ON' : 'Sound OFF');
 }
 
-// ---- NUMBER INDICATORS ----
-function initNumberIndicators() {
-  const container = document.getElementById('numIndicators');
-  container.innerHTML = '';
+/* ===== NUMBER INDICATORS ===== */
+function initNums() {
+  const c = document.getElementById('suggNums'); c.innerHTML = '';
   for (let i = 0; i <= 9; i++) {
-    const div = document.createElement('div');
-    div.className = `num-circle ${i >= 5 ? 'big-num' : 'small-num'}`;
-    div.id = `numC${i}`;
-    div.textContent = i;
-    container.appendChild(div);
+    const d = document.createElement('div');
+    d.className = `sugg-num ${i >= 5 ? 'big-n' : 'small-n'}`;
+    d.id = `nc${i}`; d.textContent = i; c.appendChild(d);
+  }
+}
+function highlightNums() {
+  for (let i = 0; i <= 9; i++) {
+    const el = document.getElementById(`nc${i}`);
+    el.classList.toggle('active', i === S.predictedNumber);
+    el.classList.toggle('suggested', S.suggestedNums.includes(i) && i !== S.predictedNumber);
   }
 }
 
-function highlightNumber(num) {
-  for (let i = 0; i <= 9; i++) {
-    const el = document.getElementById(`numC${i}`);
-    el.classList.toggle('active', i === num);
-  }
-}
+/* ===== API FETCH ===== */
+async function fetchData() {
+  const endpoints = [
+    `${CFG.API}/api/webapi/GetNoapolygon/GetGameIssue`,
+    `${CFG.API}/api/webapi/GetGameIssue`
+  ];
+  const body = JSON.stringify({ typeid: 1, language: 0, pageno: 0, pageSize: CFG.TREND_WIN });
 
-// ---- API FETCHING ----
-async function fetchGameData() {
-  const url = `${CONFIG.API_BASE}/api/webapi/GetNoapolygon/GetGameIssue`;
-  const body = {
-    typeid: 1,
-    language: 0,
-    pageno: 0,
-    pageSize: CONFIG.TREND_WINDOW
-  };
-
-  try {
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    STATE.fetchErrors = 0;
-    setOnline(true);
-    hideError();
-    STATE.apiAvailable = true;
-    return data;
-  } catch (err) {
-    // Try alternate endpoint
+  for (const url of endpoints) {
     try {
-      const resp2 = await fetch(`${CONFIG.API_BASE}/api/webapi/GetGameIssue`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ typeid: 1, language: 0, pageno: 0, pageSize: CONFIG.TREND_WINDOW })
-      });
-      if (!resp2.ok) throw new Error(`HTTP ${resp2.status}`);
-      const data2 = await resp2.json();
-      STATE.fetchErrors = 0;
-      setOnline(true);
-      hideError();
-      STATE.apiAvailable = true;
-      return data2;
-    } catch (err2) {
-      STATE.fetchErrors++;
-      if (STATE.fetchErrors >= 3) {
-        showError('API unreachable — using simulation mode');
-        setOnline(false);
-      }
-      return null;
-    }
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (!r.ok) continue;
+      const d = await r.json();
+      S.fetchErr = 0; setOnline(true); hideErr(); S.apiOk = true;
+      return d;
+    } catch (e) { continue; }
   }
+  S.fetchErr++;
+  if (S.fetchErr >= 3) { showErr('API unreachable — simulation mode active'); setOnline(false); }
+  return null;
 }
 
 async function fetchAndProcess() {
-  const data = await fetchGameData();
-
-  if (data && data.data) {
-    processApiData(data.data);
-  } else {
-    // Simulation fallback
-    simulateData();
-  }
+  const d = await fetchData();
+  if (d && d.data) processApi(d.data); else simData();
 }
 
-function processApiData(apiData) {
+function processApi(api) {
   try {
-    const list = apiData.list || apiData.gameList || apiData || [];
-    if (!Array.isArray(list) || list.length === 0) {
-      simulateData();
-      return;
-    }
+    const list = api.list || api.gameList || api || [];
+    if (!Array.isArray(list) || !list.length) { simData(); return; }
 
-    // Extract results
-    const results = list.map(item => {
-      const num = parseInt(item.number || item.result || item.num || '0');
-      const period = item.issueNumber || item.period || item.issue || '';
-      return { period, number: isNaN(num) ? 0 : num % 10 };
+    const results = list.map(it => {
+      const n = parseInt(it.number || it.result || it.num || '0');
+      const p = it.issueNumber || it.period || it.issue || '';
+      return { period: p, number: isNaN(n) ? 0 : n % 10 };
     });
 
-    // Update current period from timer info
-    if (apiData.issue || apiData.issueNumber) {
-      STATE.currentPeriod = apiData.issue || apiData.issueNumber;
-    } else if (results.length > 0) {
-      STATE.currentPeriod = incrementPeriod(results[0].period);
-    }
+    if (api.issue || api.issueNumber) S.curPeriod = api.issue || api.issueNumber;
+    else if (results.length) S.curPeriod = results[0].period;
 
-    // Timer from API
-    if (apiData.second !== undefined) {
-      STATE.timer = Math.max(0, parseInt(apiData.second));
-    }
+    if (api.second !== undefined) S.timer = Math.max(0, parseInt(api.second));
 
-    // Update trend data
-    STATE.trendData = results.map(r => r.number).slice(0, CONFIG.TREND_WINDOW);
+    S.trendData = results.map(r => r.number).slice(0, CFG.TREND_WIN);
 
-    // Check last result
-    if (results.length > 0 && results[0].number !== STATE.lastResult) {
-      const prev = STATE.lastResult;
-      STATE.lastResult = results[0].number;
-
-      if (prev !== null && STATE.prediction) {
-        evaluatePrediction(results[0].number, results[0].period);
+    const latestPeriod = results[0]?.period || '';
+    if (latestPeriod && latestPeriod !== S.lastPeriodProcessed) {
+      if (S.lastPeriodProcessed && S.prediction) {
+        evalPred(results[0].number, latestPeriod);
       }
+      S.lastPeriodProcessed = latestPeriod;
+      S.lastResult = results[0].number;
+      S.nextPeriod = incPeriod(latestPeriod);
+      showThinking();
     }
 
-    // Generate new prediction
-    generatePrediction();
     updateUI();
-  } catch (e) {
-    console.warn('Process error:', e);
-    simulateData();
-  }
+  } catch (e) { console.warn('Process err:', e); simData(); }
 }
 
-function incrementPeriod(period) {
-  const str = String(period);
-  const numPart = parseInt(str.slice(-4)) + 1;
-  return str.slice(0, -4) + String(numPart).padStart(4, '0');
+function incPeriod(p) {
+  const s = String(p), n = parseInt(s.slice(-4)) + 1;
+  return s.slice(0, -4) + String(n).padStart(4, '0');
 }
 
-// ---- SIMULATION FALLBACK ----
-function simulateData() {
-  // Generate realistic game data
-  if (STATE.trendData.length === 0) {
-    for (let i = 0; i < CONFIG.TREND_WINDOW; i++) {
-      STATE.trendData.push(Math.floor(Math.random() * 10));
-    }
+/* ===== SIMULATION ===== */
+function simData() {
+  if (!S.trendData.length) {
+    for (let i = 0; i < CFG.TREND_WIN; i++) S.trendData.push(Math.floor(Math.random() * 10));
   }
-
-  // Generate period number based on date
   const now = new Date();
-  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  const minuteOfDay = now.getHours() * 60 + now.getMinutes();
-  const periodInDay = Math.floor(minuteOfDay) + 1;
-  STATE.currentPeriod = `${dateStr}${String(periodInDay).padStart(4, '0')}`;
+  const ds = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const md = now.getHours() * 60 + now.getMinutes();
+  const pid = Math.floor(md) + 1;
 
-  // When timer hits 0, simulate new result
-  if (STATE.timer <= 0) {
-    const newNum = Math.floor(Math.random() * 10);
-    STATE.trendData.unshift(newNum);
-    STATE.trendData = STATE.trendData.slice(0, CONFIG.TREND_WINDOW);
+  if (S.timer <= 0) {
+    const newN = Math.floor(Math.random() * 10);
+    S.trendData.unshift(newN);
+    S.trendData = S.trendData.slice(0, CFG.TREND_WIN);
 
-    if (STATE.prediction) {
-      evaluatePrediction(newNum, STATE.currentPeriod);
-    }
+    const curP = `${ds}${String(pid).padStart(4, '0')}`;
+    if (S.prediction) evalPred(newN, curP);
+    S.lastResult = newN;
+    S.timer = CFG.DURATION;
 
-    STATE.lastResult = newNum;
-    STATE.timer = CONFIG.TIMER_DURATION;
+    const nextPid = pid + 1;
+    S.curPeriod = `${ds}${String(nextPid).padStart(4, '0')}`;
+    S.nextPeriod = `${ds}${String(nextPid + 1).padStart(4, '0')}`;
 
-    // New period
-    const newPeriodNum = periodInDay + 1;
-    STATE.currentPeriod = `${dateStr}${String(newPeriodNum).padStart(4, '0')}`;
+    showThinking();
+  } else {
+    S.curPeriod = `${ds}${String(pid).padStart(4, '0')}`;
+    S.nextPeriod = `${ds}${String(pid + 1).padStart(4, '0')}`;
   }
 
-  generatePrediction();
   updateUI();
 }
 
-// ---- PREDICTION ENGINE ----
-function generatePrediction() {
-  const data = STATE.trendData;
-  if (data.length < 3) {
-    STATE.prediction = 'BIG';
-    STATE.confidence = 50;
-    return;
-  }
+/* ===== AI THINKING ANIMATION ===== */
+function showThinking() {
+  S.isThinking = true;
+  document.getElementById('aiThinking').style.display = 'block';
+  document.getElementById('predContent').style.opacity = '0.3';
 
-  // Analysis factors
-  let bigCount = 0, smallCount = 0;
-  let recentBig = 0, recentSmall = 0;
-  const recent = data.slice(0, 10);
-  const older = data.slice(10, 20);
+  setTimeout(() => {
+    S.isThinking = false;
+    document.getElementById('aiThinking').style.display = 'none';
+    document.getElementById('predContent').style.opacity = '1';
+    genPrediction();
+    updateUI();
+    sfxPred();
+  }, 1800);
+}
 
-  data.forEach(n => n >= 5 ? bigCount++ : smallCount++);
-  recent.forEach(n => n >= 5 ? recentBig++ : recentSmall++);
+/* ===== ADVANCED PREDICTION ENGINE ===== */
+function genPrediction() {
+  const d = S.trendData;
+  if (d.length < 3) { S.prediction = 'BIG'; S.confidence = 55; S.aiMode = 'weighted'; return; }
 
-  // Streak analysis
-  let streak = 0;
-  const firstType = data[0] >= 5 ? 'BIG' : 'SMALL';
-  for (const n of data) {
-    if ((n >= 5 ? 'BIG' : 'SMALL') === firstType) streak++;
+  const last10 = d.slice(0, 10);
+  const last5 = d.slice(0, 5);
+  const all = d.slice(0, CFG.TREND_WIN);
+
+  // Count analysis
+  let bigAll = 0, smallAll = 0, big10 = 0, small10 = 0, big5 = 0, small5 = 0;
+  all.forEach(n => n >= 5 ? bigAll++ : smallAll++);
+  last10.forEach(n => n >= 5 ? big10++ : small10++);
+  last5.forEach(n => n >= 5 ? big5++ : small5++);
+
+  // Streak detection
+  let streak = 1;
+  const streakType = d[0] >= 5 ? 'BIG' : 'SMALL';
+  for (let i = 1; i < d.length; i++) {
+    if ((d[i] >= 5 ? 'BIG' : 'SMALL') === streakType) streak++;
     else break;
   }
 
-  // Pattern analysis - look for alternation patterns
-  let altScore = 0;
-  for (let i = 0; i < Math.min(data.length - 1, 8); i++) {
-    const a = data[i] >= 5 ? 'BIG' : 'SMALL';
-    const b = data[i+1] >= 5 ? 'BIG' : 'SMALL';
-    if (a !== b) altScore++;
+  // Alternation pattern detection
+  let altCount = 0;
+  for (let i = 0; i < Math.min(d.length - 1, 10); i++) {
+    if ((d[i] >= 5) !== (d[i + 1] >= 5)) altCount++;
   }
 
-  // Moving average trend
-  const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-  const olderAvg = older.length > 0 ? older.reduce((a, b) => a + b, 0) / older.length : 4.5;
-  const trendUp = recentAvg > olderAvg;
+  // Consecutive pair detection
+  let pairCount = 0;
+  for (let i = 0; i < Math.min(d.length - 1, 8); i++) {
+    if ((d[i] >= 5) === (d[i + 1] >= 5)) pairCount++;
+  }
 
-  // Weighted scoring
+  // Moving average analysis
+  const avg5 = last5.reduce((a, b) => a + b, 0) / last5.length;
+  const avg10 = last10.reduce((a, b) => a + b, 0) / last10.length;
+  const trendUp = avg5 > avg10;
+
+  // Number frequency analysis (which numbers are due)
+  const freq = new Array(10).fill(0);
+  last10.forEach(n => freq[n]++);
+
+  // Weighted scoring system
   let bigScore = 0;
+  let detectedMode = 'weighted';
 
-  // Frequency bias (slight counter)
-  bigScore += (smallCount - bigCount) * 2;
-
-  // Recent trend
-  bigScore += (recentBig - recentSmall) * 3;
-
-  // Streak factor (expect reversal after long streaks)
-  if (streak >= 4) {
-    bigScore += firstType === 'BIG' ? -15 : 15;
+  // 1. STREAK REVERSAL DETECTION (strongest signal)
+  if (streak >= 5) {
+    bigScore += streakType === 'BIG' ? -25 : 25;
+    detectedMode = 'reversal';
+  } else if (streak >= 4) {
+    bigScore += streakType === 'BIG' ? -18 : 18;
+    detectedMode = 'reversal';
   } else if (streak >= 3) {
-    bigScore += firstType === 'BIG' ? -8 : 8;
+    bigScore += streakType === 'BIG' ? -12 : 12;
+    detectedMode = 'reversal';
   }
 
-  // Alternation pattern
-  if (altScore >= 6) {
+  // 2. OVEREXTENDED TREND DETECTION
+  if (big5 >= 4) {
+    bigScore -= 15;
+    if (detectedMode === 'weighted') detectedMode = 'reversal';
+  } else if (small5 >= 4) {
+    bigScore += 15;
+    if (detectedMode === 'weighted') detectedMode = 'reversal';
+  }
+
+  // 3. RECENT TREND BIAS
+  bigScore += (big10 - small10) * 2;
+
+  // 4. ALTERNATION PATTERN
+  if (altCount >= 7) {
     // High alternation — predict opposite of last
-    bigScore += data[0] >= 5 ? -10 : 10;
+    bigScore += d[0] >= 5 ? -12 : 12;
+    detectedMode = 'streak';
   }
 
-  // Trend direction
-  bigScore += trendUp ? 5 : -5;
+  // 5. PAIR PATTERN (same-same common)
+  if (pairCount >= 6) {
+    bigScore += d[0] >= 5 ? 8 : -8;
+    if (detectedMode === 'weighted') detectedMode = 'streak';
+  }
+
+  // 6. MOVING AVERAGE TREND
+  bigScore += trendUp ? 4 : -4;
+
+  // 7. FREQUENCY BALANCING (slight mean reversion)
+  bigScore += (smallAll - bigAll) * 1;
+
+  // 8. WEIGHTED RECENT HISTORY (last 3 entries weighted heavier)
+  const w = [3, 2, 1];
+  for (let i = 0; i < 3 && i < d.length; i++) {
+    bigScore += d[i] >= 5 ? -w[i] : w[i];
+  }
 
   // Apply mode
-  let rawPrediction = bigScore >= 0 ? 'BIG' : 'SMALL';
-
-  if (STATE.mode === 'reverse') {
-    rawPrediction = rawPrediction === 'BIG' ? 'SMALL' : 'BIG';
+  let pred = bigScore >= 0 ? 'BIG' : 'SMALL';
+  if (S.mode === 'reverse') pred = pred === 'BIG' ? 'SMALL' : 'BIG';
+  if (S.mode === 'follow') {
+    if (detectedMode === 'weighted') detectedMode = 'trend';
   }
 
   // Confidence calculation
   const absScore = Math.abs(bigScore);
-  let confidence = Math.min(95, 55 + absScore * 1.5);
+  let conf = Math.min(96, 58 + absScore * 1.2);
+  if (streak >= 4) conf = Math.min(97, conf + 5);
+  if (altCount >= 5 && altCount <= 7) conf -= 6;
+  if (streak === 1 && altCount < 4) conf -= 4;
+  conf = Math.max(55, Math.min(97, Math.round(conf)));
 
-  // Reduce confidence if data is noisy
-  if (altScore >= 5 && altScore <= 6) confidence -= 8;
-  if (streak === 1) confidence -= 5;
-  confidence = Math.max(52, Math.min(97, Math.round(confidence)));
+  // Estimate best numbers
+  const range = pred === 'BIG' ? [5, 6, 7, 8, 9] : [0, 1, 2, 3, 4];
+  const rankedNums = range.map(n => ({ n, f: freq[n] })).sort((a, b) => a.f - b.f);
+  const primaryNum = rankedNums[0].n;
+  const sugNums = rankedNums.slice(0, 3).map(r => r.n);
 
-  STATE.prediction = rawPrediction;
-  STATE.confidence = confidence;
-  STATE.predictedNumber = estimateNumber(rawPrediction, data);
+  S.prediction = pred;
+  S.confidence = conf;
+  S.predictedNumber = primaryNum;
+  S.suggestedNums = sugNums;
+  S.aiMode = detectedMode;
 }
 
-function estimateNumber(prediction, data) {
-  // Estimate a likely number based on recent frequency
-  const freq = new Array(10).fill(0);
-  data.slice(0, 10).forEach(n => freq[n]++);
+/* ===== EVALUATE PREDICTION ===== */
+function evalPred(num, period) {
+  const resType = num >= 5 ? 'BIG' : 'SMALL';
+  const win = S.prediction === resType;
 
-  const range = prediction === 'BIG' ? [5,6,7,8,9] : [0,1,2,3,4];
-  // Pick least frequent in range (due for appearance)
-  let minFreq = Infinity, pick = range[0];
-  for (const n of range) {
-    if (freq[n] < minFreq) { minFreq = freq[n]; pick = n; }
-  }
-  return pick;
-}
+  S.predHistory.unshift({
+    period: period || S.curPeriod, number: num,
+    result: resType, prediction: S.prediction, win
+  });
+  S.predHistory = S.predHistory.slice(0, CFG.HIST_LIMIT);
 
-// ---- EVALUATE PREDICTION ----
-function evaluatePrediction(resultNum, period) {
-  const resultType = resultNum >= 5 ? 'BIG' : 'SMALL';
-  const win = STATE.prediction === resultType;
-
-  const entry = {
-    period: period || STATE.currentPeriod,
-    number: resultNum,
-    result: resultType,
-    prediction: STATE.prediction,
-    win
-  };
-
-  STATE.predictionHistory.unshift(entry);
-  STATE.predictionHistory = STATE.predictionHistory.slice(0, CONFIG.HISTORY_LIMIT);
-
-  // Martingale
   if (win) {
-    STATE.martingale = { level: 0, streak: 0 };
-    sfxWin();
-    showToast('✓ WIN — Prediction correct!');
+    S.mart = { level: 0, streak: 0 };
+    S.wins++; sfxWin(); toast('WIN — Prediction correct!');
   } else {
-    STATE.martingale.streak++;
-    STATE.martingale.level = Math.min(STATE.martingale.streak, 7);
-    sfxLoss();
-    showToast('✗ LOSS — Adjusting analysis...');
+    S.mart.streak++;
+    S.mart.level = Math.min(S.mart.streak, 7);
+    S.losses++; sfxLoss(); toast('LOSS — Recalibrating AI...');
   }
 }
 
-// ---- MODE TOGGLE ----
-function setMode(mode) {
-  STATE.mode = mode;
-  document.getElementById('modeFollow').classList.toggle('active', mode === 'follow');
-  document.getElementById('modeReverse').classList.toggle('active', mode === 'reverse');
-  generatePrediction();
-  updateUI();
-  sfxTick();
-  showToast(mode === 'follow' ? 'Trend Follow Mode' : 'Smart Reverse Mode');
+/* ===== CONTROLS ===== */
+function setMode(m) {
+  S.mode = m;
+  document.getElementById('modeFollow').classList.toggle('active', m === 'follow');
+  document.getElementById('modeReverse').classList.toggle('active', m === 'reverse');
+  if (!S.isThinking) { genPrediction(); updateUI(); }
+  sfxTick(); toast(m === 'follow' ? 'Trend Follow Mode' : 'Smart Reverse Mode');
+}
+function manualPick(t) {
+  S.prediction = t; S.confidence = 100;
+  S.predictedNumber = t === 'BIG' ? 7 : 2;
+  S.suggestedNums = t === 'BIG' ? [5, 7, 8] : [0, 2, 3];
+  S.aiMode = 'manual';
+  updateUI(); sfxPred(); toast(`Manual override: ${t}`);
+}
+function resetMart() {
+  S.mart = { level: 0, streak: 0 }; updateMartUI(); sfxTick(); toast('Martingale reset');
 }
 
-// ---- MANUAL PICK ----
-function manualPick(type) {
-  STATE.prediction = type;
-  STATE.confidence = 100;
-  updateUI();
-  sfxPredict();
-  showToast(`Manual override: ${type}`);
-}
-
-// ---- MARTINGALE RESET ----
-function resetMartingale() {
-  STATE.martingale = { level: 0, streak: 0 };
-  updateMartingaleUI();
-  sfxTick();
-  showToast('Martingale reset');
-}
-
-// ---- PING ----
+/* ===== PING ===== */
 async function checkPing() {
-  const start = performance.now();
+  const t0 = performance.now();
   try {
-    await fetch(`${CONFIG.API_BASE}/api/webapi/health`, {
-      method: 'HEAD',
-      mode: 'no-cors',
-      cache: 'no-store'
-    });
-    const ms = Math.round(performance.now() - start);
-    document.getElementById('pingText').textContent = `${ms}ms`;
+    await fetch(`${CFG.API}/api/webapi/health`, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+    document.getElementById('pingTxt').textContent = `${Math.round(performance.now() - t0)}ms`;
     setOnline(true);
-  } catch {
-    document.getElementById('pingText').textContent = 'SIM';
-    // Keep running in simulation
-  }
+  } catch { document.getElementById('pingTxt').textContent = 'SIM'; }
 }
+function setOnline(on) {
+  S.online = on;
+  const pd = document.getElementById('pingDot'), sd = document.getElementById('sDot');
+  pd.style.background = on ? 'var(--green)' : 'var(--gold)';
+  pd.style.boxShadow = `0 0 8px ${on ? 'var(--green)' : 'var(--gold)'}`;
+  sd.className = `status-dot ${on ? 'on' : 'off'}`;
+  document.getElementById('sTxt').textContent = on ? 'Connected to neural engine' : 'Simulation mode — AI active';
+}
+function showErr(m) { document.getElementById('errTxt').textContent = m; document.getElementById('errBan').classList.add('show'); }
+function hideErr() { document.getElementById('errBan').classList.remove('show'); }
 
-function setOnline(online) {
-  STATE.isOnline = online;
-  const dot = document.getElementById('pingDot');
-  const sDot = document.getElementById('statusDot');
-  dot.style.background = online ? 'var(--green)' : 'var(--gold)';
-  dot.style.boxShadow = `0 0 8px ${online ? 'var(--green)' : 'var(--gold)'}`;
-  sDot.className = `status-dot ${online ? 'online' : 'offline'}`;
-  document.getElementById('statusText').textContent = online
-    ? 'Connected to prediction engine'
-    : 'Simulation mode — AI engine active';
-}
-
-function showError(msg) {
-  document.getElementById('errorText').textContent = msg;
-  document.getElementById('errorBanner').classList.add('show');
-}
-function hideError() {
-  document.getElementById('errorBanner').classList.remove('show');
-}
-
-// ---- UPDATE UI ----
+/* ===== UPDATE UI ===== */
 function updateUI() {
-  updateTimerUI();
-  updatePredictionUI();
-  updateTrendUI();
-  updateMartingaleUI();
-  updateHistoryUI();
-  updatePeriodUI();
+  updateTimerUI(); updatePredUI(); updateTrendUI(); updateMartUI(); updateHistUI(); updatePeriodUI();
 }
-
 function updatePeriodUI() {
-  document.getElementById('periodNum').textContent = STATE.currentPeriod || '----';
+  document.getElementById('curPeriod').textContent = S.curPeriod || '----';
+  document.getElementById('nextPeriod').textContent = S.nextPeriod || '----';
 }
-
 function updateTimerUI() {
-  const t = Math.max(0, STATE.timer);
-  const min = Math.floor(t / 60);
-  const sec = t % 60;
-  document.getElementById('timerMin').textContent = min;
-  document.getElementById('timerSec1').textContent = Math.floor(sec / 10);
-  document.getElementById('timerSec2').textContent = sec % 10;
-  const pct = (t / CONFIG.TIMER_DURATION) * 100;
-  document.getElementById('timerBarFill').style.width = `${pct}%`;
-
-  // Color change when low
-  const digits = document.querySelectorAll('.timer-digit');
-  digits.forEach(d => {
+  const t = Math.max(0, S.timer), m = Math.floor(t / 60), s = t % 60;
+  document.getElementById('tMin').textContent = m;
+  document.getElementById('tS1').textContent = Math.floor(s / 10);
+  document.getElementById('tS2').textContent = s % 10;
+  document.getElementById('tBarFill').style.width = `${(t / CFG.DURATION) * 100}%`;
+  document.querySelectorAll('.t-dig').forEach(d => {
     d.style.color = t <= 10 ? 'var(--red)' : 'var(--cyan)';
-    d.style.textShadow = t <= 10 ? '0 0 12px var(--red)' : '0 0 12px rgba(0,240,255,0.5)';
+    d.style.textShadow = t <= 10 ? '0 0 12px var(--red)' : '0 0 10px rgba(0,240,255,0.4)';
   });
 }
+function updatePredUI() {
+  if (S.isThinking) return;
+  const el = document.getElementById('predVal');
+  el.textContent = S.prediction || '---';
+  el.className = `pred-val ${(S.prediction || '').toLowerCase()}`;
+  document.getElementById('confFill').style.width = `${S.confidence}%`;
+  document.getElementById('confTxt').textContent = `${S.confidence}%`;
 
-function updatePredictionUI() {
-  const el = document.getElementById('predValue');
-  el.textContent = STATE.prediction || '---';
-  el.className = `pred-value ${(STATE.prediction || '').toLowerCase()}`;
-
-  document.getElementById('confFill').style.width = `${STATE.confidence}%`;
-  document.getElementById('confText').textContent = `${STATE.confidence}%`;
-
-  if (STATE.predictedNumber !== undefined) {
-    highlightNumber(STATE.predictedNumber);
+  // AI Mode tag
+  const mTag = document.getElementById('aiModeTag');
+  if (S.aiMode) {
+    mTag.style.display = 'inline-block';
+    const labels = { streak: 'STREAK DETECT', reversal: 'REVERSAL MODE', weighted: 'WEIGHTED AVG', trend: 'TREND FOLLOW', manual: 'MANUAL' };
+    mTag.textContent = labels[S.aiMode] || S.aiMode.toUpperCase();
+    mTag.className = `ai-mode-tag ${S.aiMode}`;
   }
-}
 
+  highlightNums();
+}
 function updateTrendUI() {
-  const container = document.getElementById('trendDots');
-  container.innerHTML = '';
-  const data = STATE.trendData.slice(0, CONFIG.TREND_WINDOW);
-
-  data.forEach(n => {
+  const c = document.getElementById('trendDots'); c.innerHTML = '';
+  const d = S.trendData.slice(0, CFG.TREND_WIN);
+  d.forEach(n => {
     const dot = document.createElement('div');
-    dot.className = `trend-dot ${n >= 5 ? 'b' : 's'}`;
-    dot.textContent = n;
-    container.appendChild(dot);
+    dot.className = `trend-dot ${n >= 5 ? 'b' : 's'}`; dot.textContent = n; c.appendChild(dot);
   });
-
-  const bigCount = data.filter(n => n >= 5).length;
-  const smallCount = data.filter(n => n < 5).length;
-
-  document.getElementById('statBig').textContent = bigCount;
-  document.getElementById('statSmall').textContent = smallCount;
-
-  // Calculate current streak
-  if (data.length > 0) {
-    let streak = 1;
-    const type = data[0] >= 5;
-    for (let i = 1; i < data.length; i++) {
-      if ((data[i] >= 5) === type) streak++;
-      else break;
-    }
-    document.getElementById('statStreak').textContent = streak;
+  const bc = d.filter(n => n >= 5).length, sc = d.filter(n => n < 5).length;
+  document.getElementById('stBig').textContent = bc;
+  document.getElementById('stSmall').textContent = sc;
+  if (d.length) {
+    let sk = 1; const tp = d[0] >= 5;
+    for (let i = 1; i < d.length; i++) { if ((d[i] >= 5) === tp) sk++; else break; }
+    document.getElementById('stStreak').textContent = sk;
   }
 }
-
-function updateMartingaleUI() {
-  const m = STATE.martingale;
-  document.getElementById('martLevel').textContent = `M${m.level}`;
-  document.getElementById('martStreak').textContent = m.streak;
-  const multi = Math.pow(2, m.level);
-  document.getElementById('martMulti').textContent = `${multi}x`;
-
-  const levelEl = document.getElementById('martLevel');
-  if (m.level >= 4) {
-    levelEl.style.color = 'var(--red)';
-    levelEl.style.textShadow = '0 0 15px var(--red)';
-  } else if (m.level >= 2) {
-    levelEl.style.color = 'var(--gold)';
-    levelEl.style.textShadow = '0 0 15px rgba(255,215,0,0.4)';
-  } else {
-    levelEl.style.color = 'var(--green)';
-    levelEl.style.textShadow = '0 0 15px rgba(57,255,20,0.4)';
-  }
+function updateMartUI() {
+  const m = S.mart;
+  document.getElementById('martLvl').textContent = `M${m.level}`;
+  document.getElementById('martStr').textContent = m.streak;
+  document.getElementById('martMul').textContent = `${Math.pow(2, m.level)}x`;
+  const el = document.getElementById('martLvl');
+  if (m.level >= 4) { el.style.color = 'var(--red)'; }
+  else if (m.level >= 2) { el.style.color = 'var(--gold)'; }
+  else { el.style.color = 'var(--green)'; }
 }
-
-function updateHistoryUI() {
-  const tbody = document.getElementById('histBody');
-  tbody.innerHTML = '';
-
-  STATE.predictionHistory.forEach(entry => {
+function updateHistUI() {
+  const tb = document.getElementById('histBody'); tb.innerHTML = '';
+  S.predHistory.forEach(e => {
     const tr = document.createElement('tr');
-    const shortPeriod = entry.period ? String(entry.period).slice(-6) : '--';
-    tr.innerHTML = `
-      <td style="color:var(--muted)">${shortPeriod}</td>
-      <td><strong>${entry.number}</strong></td>
-      <td><span class="badge ${entry.result.toLowerCase()}">${entry.result}</span></td>
-      <td><span class="badge ${entry.prediction.toLowerCase()}">${entry.prediction}</span></td>
-      <td><span class="badge ${entry.win ? 'win' : 'loss'}">${entry.win ? 'WIN' : 'LOSS'}</span></td>
-    `;
-    tbody.appendChild(tr);
+    const sp = e.period ? String(e.period).slice(-6) : '--';
+    tr.innerHTML = `<td style="color:var(--muted)">${sp}</td>
+      <td><strong>${e.number}</strong></td>
+      <td><span class="badge ${e.result.toLowerCase()}">${e.result}</span></td>
+      <td><span class="badge ${e.prediction.toLowerCase()}">${e.prediction}</span></td>
+      <td><span class="badge ${e.win ? 'win' : 'loss'}">${e.win ? 'WIN' : 'LOSS'}</span></td>`;
+    tb.appendChild(tr);
   });
+  // Auto-scroll
+  const w = document.getElementById('histWrap');
+  w.scrollTop = 0;
+
+  // Win rate
+  const total = S.wins + S.losses;
+  document.getElementById('wrWins').textContent = S.wins;
+  document.getElementById('wrLoss').textContent = S.losses;
+  document.getElementById('wrRate').textContent = total ? `${Math.round((S.wins / total) * 100)}%` : '0%';
 }
 
-// ---- TIMER ENGINE ----
+/* ===== TIMER ===== */
 function startTimer() {
-  STATE.timerInterval = setInterval(() => {
-    STATE.timer--;
-
-    if (STATE.timer <= 5 && STATE.timer > 0) sfxTick();
-
-    if (STATE.timer <= 0) {
-      // If not using real API, simulate new result (simulateData resets timer internally)
-      if (!STATE.apiAvailable) {
-        simulateData();
-      } else {
-        STATE.timer = CONFIG.TIMER_DURATION;
-      }
-
-      sfxPredict();
+  S.timerInt = setInterval(() => {
+    S.timer--;
+    if (S.timer <= 5 && S.timer > 0) sfxTick();
+    if (S.timer <= 0) {
+      if (!S.apiOk) simData();
+      else S.timer = CFG.DURATION;
+      sfxPred();
     }
-
     updateTimerUI();
   }, 1000);
 }
 
-// ---- START ENGINE ----
+/* ===== START ===== */
 function startEngine() {
-  initNumberIndicators();
-
-  // Initial fetch
-  fetchAndProcess();
-
-  // Timer
-  startTimer();
-
-  // Periodic fetch
-  STATE.fetchInterval = setInterval(fetchAndProcess, CONFIG.FETCH_INTERVAL);
-
-  // Ping check
-  checkPing();
-  STATE.pingInterval = setInterval(checkPing, CONFIG.PING_INTERVAL);
-
+  initNums(); fetchAndProcess(); startTimer();
+  S.fetchInt = setInterval(fetchAndProcess, CFG.FETCH_INT);
+  checkPing(); S.pingInt = setInterval(checkPing, CFG.PING_INT);
   setOnline(true);
+  // Initial prediction
+  setTimeout(() => { if (!S.isThinking) { genPrediction(); updateUI(); } }, 500);
 }
 
-// ---- INIT ----
-window.addEventListener('DOMContentLoaded', initApp);
+addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
