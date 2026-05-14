@@ -1063,11 +1063,11 @@ function startTimer() {
     if (STATE.timer <= 5 && STATE.timer > 0) sfxTick();
 
     if (STATE.timer <= 0) {
-      STATE.timer = CONFIG.TIMER_DURATION;
-
-      // If not using real API, simulate new result
+      // If not using real API, simulate new result (simulateData resets timer internally)
       if (!STATE.apiAvailable) {
         simulateData();
+      } else {
+        STATE.timer = CONFIG.TIMER_DURATION;
       }
 
       sfxPredict();
